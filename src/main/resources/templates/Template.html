@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CHSS Rejection Letter</title>
+
+<style>
+    body{
+        font-family: "Times New Roman", serif;
+        font-size:16px;
+        width:210mm;
+        margin:0 auto;
+        padding:20mm 25mm;
+        line-height:1.6;
+    }
+
+    .center{
+        text-align:center;
+    }
+
+    h2{
+        margin:0;
+        font-size:24px;
+        font-weight:bold;
+    }
+
+    h3{
+        margin:5px 0 30px 0;
+        font-size:20px;
+        font-weight:bold;
+    }
+
+    .top{
+        width:100%;
+        margin-bottom:35px;
+    }
+
+    .left{
+        float:left;
+    }
+
+    .right{
+        float:right;
+    }
+
+    .clear{
+        clear:both;
+    }
+
+    .subject{
+        margin-top:25px;
+        margin-bottom:35px;
+        font-weight:bold;
+    }
+
+    .body{
+        text-align:justify;
+    }
+
+    .reasons{
+        margin-top:20px;
+        margin-left:30px;
+    }
+
+    .signature{
+        margin-top:80px;
+        text-align:right;
+    }
+
+    .to{
+        margin-top:70px;
+    }
+</style>
+
+</head>
+
+<body>
+
+<div class="center">
+    <h2>U R Rao Satellite Centre</h2>
+    <h3>Finance and Accounts</h3>
+</div>
+
+<div class="top">
+    <div class="left">
+        <strong>Staff No:</strong> {{ staff_id }}
+    </div>
+
+    <div class="right">
+        <strong>Date:</strong> {{ issue_date }}
+    </div>
+</div>
+
+<div class="clear"></div>
+
+<div class="subject">
+    SUBJECT: Return of CHSS Claim for Reimbursement of Medical Expenses Under CHSS / CSMA Rule
+</div>
+
+<div class="body">
+    Your claim(s) towards reimbursement of medical expenses dated
+    <strong>{{ medical_expense_dates }}</strong>
+    for
+    <strong>Rs. {{ amount }}/-</strong>
+    is/are returned unpassed on account of reason(s) mentioned below:
+</div>
+
+<div class="reasons">
+    <ol>
+        {% for reason in reasons %}
+        <li>{{ reason }}</li>
+        {% endfor %}
+    </ol>
+</div>
+
+<div class="signature">
+    <strong>Senior Accounts Officer</strong>
+</div>
+
+<div class="to">
+    <strong>To,</strong><br><br>
+
+    {{ employee_name }}<br>
+
+    {{ address_line1 }}<br>
+
+    {{ address_line2 }}<br>
+
+    {{ address_line3 }}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="toast">
+        <div th:if="${success}" class="toast toast-success" id="toast">
+            <i class="fas fa-check-circle"></i>
+            <span th:text="${success}"></span>
+            <button onclick="dismissToast()" class="toast-close">&times;</button>
+        </div>
+        <div th:if="${error}" class="toast toast-error" id="toast">
+            <i class="fas fa-exclamation-circle"></i>
+            <span th:text="${error}"></span>
+            <button onclick="dismissToast()" class="toast-close">&times;</button>
+        </div>
+    </th:block>
+</body>
+</html>

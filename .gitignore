@@ -1,0 +1,10 @@
+target/
+*.jar
+*.log
+*.err
+*.original
+generated_letters/
+.idea/
+*.iml
+.vscode/
+.DS_Store
