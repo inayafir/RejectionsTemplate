@@ -4,24 +4,84 @@ Automated generation of CHSS rejection letters for URSC Finance & Accounts.
 
 ## Prerequisites
 
-- Java 21+
-- Maven 3.8+
-- MySQL 8.0+
+- **Java 17+** (tested on Eclipse Adoptium JDK 17)
+- **Maven 3.6+** (tested on Apache Maven 3.9.6)
 
-## Database Setup
+No external database is required — the application uses an embedded H2 database by default (dev profile).
 
-1. Create a MySQL database:
-   ```sql
-   CREATE DATABASE chss_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
+## Quick Start
 
-2. Update database credentials in `src/main/resources/application.properties`:
-   ```properties
-   spring.datasource.username=your_username
-   spring.datasource.password=your_password
-   ```
+```bash
+# 1. Build the project (first run downloads dependencies)
+mvn package -DskipTests
+
+# 2. Run the application
+java -jar target/chss-rejection-generator-1.0.0.jar
+```
+
+The application starts at **http://localhost:8080/**.
+
+## Detailed Setup
+
+### 1. Install Java 17
+
+Download from [Eclipse Adoptium](https://adoptium.net/) and set `JAVA_HOME`:
+
+```cmd
+set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.19.10-hotspot
+```
+
+### 2. Install Maven
+
+Download from [Apache Maven](https://maven.apache.org/download.cgi) (e.g. 3.9.6).
+
+Extract to a folder and add `bin\` to your `PATH`.
+
+### 3. Build
+
+```cmd
+mvn package -DskipTests
+```
+
+This creates `target/chss-rejection-generator-1.0.0.jar`.
+
+### 4. Run
+
+```cmd
+java -jar target/chss-rejection-generator-1.0.0.jar
+```
+
+The app is ready when you see:
+```
+Tomcat started on port 8080 (http) with context path ''
+Started ChssApplication in 10.298 seconds
+```
+
+### 5. Open
+
+Navigate to **http://localhost:8080/** in your browser.
+
+## Quick Updates (After Code Changes)
+
+If you only changed static files (CSS, HTML templates, JS), you can avoid a full rebuild:
+
+```cmd
+mvn compile
+jar uf target/chss-rejection-generator-1.0.0.jar -C target\classes static\css\style.css
+jar uf target/chss-rejection-generator-1.0.0.jar -C target\classes templates\generate.html
+java -jar target/chss-rejection-generator-1.0.0.jar
+```
+
+## Pages
+
+| Page | Route | Description |
+|---|---|---|
+| Generate Letter | `/` or `/generate` | Create rejection letters with employee search and live preview |
+| View Letter | `/view/{id}` | View generated PDF with Download, Print, Edit, Regenerate |
 
 ## Configuration
+
+All configuration is in `src/main/resources/application.properties`.
 
 | Property | Description | Default |
 |---|---|---|
@@ -30,52 +90,9 @@ Automated generation of CHSS rejection letters for URSC Finance & Accounts.
 | `app.sqlite.db-path` | Path to SQLite staff directory | `./staff_directory.db` |
 | `app.rejections.json-path` | Path to rejections JSON file | `./Rejections.json` |
 
-## Build & Run
-
-```bash
-mvn clean install
-mvn spring-boot:run
-```
-
-Or run the `ChssApplication` main class from your IDE.
-
-## Access
-
-- Dashboard: `http://localhost:8080/`
-- Generate Letter: `http://localhost:8080/generate`
-- Letter History: `http://localhost:8080/history`
-- Employee Management: `http://localhost:8080/employees`
-- Rejection Reason Management: `http://localhost:8080/reasons`
-
-## Data Migration
+## Data
 
 On first startup, the application automatically:
-1. Creates all required database tables via Hibernate `ddl-auto=update`
-2. Migrates employee records from `staff_directory.db` (SQLite) to MySQL
-3. Loads standard rejection reasons from `Rejections.json` into MySQL
-
-After migration, all data is served from MySQL. The SQLite file and JSON file are not read again.
-
-## Features
-
-- **Dashboard** - Clean overview with quick access to all functions
-- **Employee Search** - Real-time autocomplete search by Staff ID or name
-- **Live Preview** - Instant preview of the rejection letter as you fill the form
-- **PDF Generation** - Generates professionally formatted PDFs from the official template
-- **Letter History** - Searchable history with date range filtering
-- **Employee Management** - Add, edit, delete employees with Excel import/export
-- **Rejection Reason Management** - Add, edit, enable/disable rejection reasons
-- **Responsive UI** - Professional government-style interface for all devices
-
-## Pages
-
-| Page | Route | Description |
-|---|---|---|
-| Dashboard | `/` | Home page with summary stats and navigation cards |
-| Generate Letter | `/generate` | Form + live preview for creating rejection letters |
-| View Letter | `/view/{id}` | View generated letter PDF with Download/Print/Edit/Regenerate |
-| Letter History | `/history` | Search by Staff ID, Letter ID, name, or date range |
-| Employees | `/employees` | Manage employee records |
-| Add/Edit Employee | `/employees/add`, `/employees/edit/{id}` | Employee form |
-| Rejection Reasons | `/reasons` | Manage rejection reasons |
-| Add/Edit Reason | `/reasons/add`, `/reasons/edit/{id}` | Reason form |
+1. Creates database tables via Hibernate
+2. Migrates employee records from `staff_directory.db` (SQLite) to H2
+3. Loads standard rejection reasons from `Rejections.json` into H2
