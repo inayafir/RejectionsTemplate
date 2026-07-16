@@ -4,10 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Entity representing a generated rejection letter.
- * Stores all metadata and the PDF file path.
- */
 @Entity
 @Table(name = "generated_letters")
 public class GeneratedLetter {

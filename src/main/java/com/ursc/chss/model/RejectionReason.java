@@ -2,10 +2,6 @@ package com.ursc.chss.model;
 
 import jakarta.persistence.*;
 
-/**
- * Entity representing a standard rejection reason.
- * Loaded initially from Rejections.json, then stored in MySQL for easy maintenance.
- */
 @Entity
 @Table(name = "rejection_reasons")
 public class RejectionReason {

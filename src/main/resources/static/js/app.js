@@ -54,8 +54,7 @@ function updatePreview() {
     var amount = document.getElementById('amount');
 
     if (!staffId || !staffId.value) {
-        preview.innerHTML = '<div class="preview-placeholder"><i class="fas fa-file-alt"></i>' +
-                            '<p>Fill in the form to see a live preview of the rejection letter.</p></div>';
+        preview.innerHTML = '<div class="preview-placeholder"><p>Fill in the form to see a live preview of the rejection letter.</p></div>';
         return;
     }
 
@@ -93,9 +92,8 @@ function updatePreview() {
         '<div class="clear"></div>' +
         '<div class="subject">SUBJECT: Return of CHSS Claim for Reimbursement of Medical Expenses Under CHSS / CSMA Rule</div>' +
         '<div class="body">Your claim(s) towards reimbursement of medical expenses dated ' +
-        '<strong>' + escapeHtml(expenseDates) + '</strong> for ' +
-        '<strong>Rs. ' + escapeHtml(amt) + '/-</strong> ' +
-        'is/are returned unpassed on account of reason(s) mentioned below:</div>' +
+        escapeHtml(expenseDates !== '______' ? expenseDates : date) +
+        ' for Rs. ' + escapeHtml(amt) + '/- is/are returned unpassed on account of reason(s) mentioned below:</div>' +
         '<div class="reasons">' + reasonsHtml + '</div>' +
         '<div class="signature"><strong>Senior Accounts Officer</strong></div>' +
         '<div class="to"><strong>To,</strong><br><br>' +

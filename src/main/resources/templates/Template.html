@@ -77,32 +77,28 @@
 <body>
 
 <div class="center">
-    <h2>U R Rao Satellite Centre</h2>
-    <h3>Finance and Accounts</h3>
+    <h2>{{ org_name }}</h2>
+    <h3>{{ dept_name }}</h3>
 </div>
 
 <div class="top">
     <div class="left">
-        <strong>Staff No:</strong> {{ staff_id }}
+        <strong>{{ staff_label }}</strong> {{ staff_id }}
     </div>
 
     <div class="right">
-        <strong>Date:</strong> {{ issue_date }}
+        <strong>{{ date_label }}</strong> {{ issue_date }}
     </div>
 </div>
 
 <div class="clear"></div>
 
 <div class="subject">
-    SUBJECT: Return of CHSS Claim for Reimbursement of Medical Expenses Under CHSS / CSMA Rule
+    {{ subject }}
 </div>
 
 <div class="body">
-    Your claim(s) towards reimbursement of medical expenses dated
-    <strong>{{ medical_expense_dates }}</strong>
-    for
-    <strong>Rs. {{ amount }}/-</strong>
-    is/are returned unpassed on account of reason(s) mentioned below:
+    {{ body_text }}
 </div>
 
 <div class="reasons">
@@ -114,11 +110,11 @@
 </div>
 
 <div class="signature">
-    <strong>Senior Accounts Officer</strong>
+    <strong>{{ officer_title }}</strong>
 </div>
 
 <div class="to">
-    <strong>To,</strong><br><br>
+    <strong>{{ to_label }}</strong><br><br>
 
     {{ employee_name }}<br>
 

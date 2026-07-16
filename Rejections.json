@@ -2,67 +2,75 @@
   "objection_points": [
     {
       "number": 1,
-      "description": "For those beneficiaries who are going ABROAD, please attach a copy of your tickets (both onward & return) and VISA copy along with your medical claims."
+      "description": "The claim has not been submitted within the prescribed time limit, i.e., three months from the date of consultation/prescription. Hence approval from Administration is required."
     },
     {
       "number": 2,
-      "description": "Kindly obtain AMO's endorsement (Signature & Seal) on the Reimbursement Form & Tax Invoice and resubmit it to Accounts."
+      "description": "Medicines purchased are inadmissible under CHSS/CSMA rules."
     },
     {
       "number": 3,
-      "description": "Kindly fill in the attached Declaration Form and resubmit it to Accounts for further processing."
+      "description": "The Medical claim/s is/are not filled properly by the employee."
     },
     {
       "number": 4,
-      "description": "There is delay notice in purchasing the Medicines. Hence unable to process your medical claims. As per rule, the medicines should be purchased WITHIN SEVEN DAYS from the date of the prescription. You may submit your claims to Admin Officer CHSS-P&GA, with Condonation/justification letter for taking approval of the Competent Authority."
+      "description": "The prescription is not signed/sealed by AMO."
     },
     {
       "number": 5,
-      "description": "The claim has not been submitted within the prescribed time limit i.e., Three Months from the date of consultation. You may write a condonation letter to Admin Office-CHSS, P&GA for taking approval of the Competent Authority."
+      "description": "Kindly fill the attached Declaration Form and forward to CHSS-Accounts along with the claim for processing."
     },
     {
       "number": 6,
-      "description": "Direct payment made to the empaneled Lab or Hospital cannot be reimbursed directly by Accounts. You may submit your claim with a justification letter and Report / Discharge Summary to Admin officer – CHSS, P&GA for taking approval of the competent Authority."
+      "description": "The date of the cash bill is prior to the prescription date."
     },
     {
       "number": 7,
-      "description": "Tax invoice is not tallying with Prescription. Kindly co-relate the purchased medicines with Prescription and resubmit."
+      "description": "Direct payment made to the empanelled Lab or Hospital cannot be reimbursed directly by Accounts. Please submit your claim with a justification letter to the Administrative Officer-CHSS for approval by the Competent Authority."
     },
     {
       "number": 8,
-      "description": "Please enclose Complete Original Prescription/Discharge Summary along with the Medical claims and forward to CHSS-Accounts for processing the claim."
+      "description": "Doctor has not written the Diagnosis/Dosage of the Medicines/Injections in the Prescription form."
     },
     {
       "number": 9,
-      "description": "The submitted claim does not belong to F&A, URSC. Kindly submit it to the concerned Centre."
+      "description": "Please obtain endorsement of your AMO (in the back-to-back Form and on the back side of the cash bills) for the treatment taken from the Hospital."
     },
     {
       "number": 10,
-      "description": "Date of Prescription is missing. Kindly get it incorporated and resubmit your claim to Accounts-CHSS."
+      "description": "Treatment taken from an unauthorised/unempanelled Hospital/Lab is not reimbursable under CHSS. If it is an emergency claim, please submit your claim with a justification letter to the Administrative Officer-CHSS for approval by the Competent Authority."
     },
     {
       "number": 11,
-      "description": "Date of Tax Invoice/ Cash Bill is prior to Prescription Date, hence unable to process the claim. You may submit your claim with condonation/justification letter to Administrative Officer-CHSS, P&GA for further necessary action."
+      "description": "Annual CHSS Subscription for the calendar year has not been received. Hence unable to process your Medical Claims."
     },
     {
       "number": 12,
-      "description": "Medicine Prescribed by Specialists / Purchased by beneficiary for more than 3 months cannot be reimbursed directly by Accounts. You may submit your claim with Condonation/Justification letter to Admin Officer- CHSS, P&GA, for taking approval of the Competent Authority for purchase of medicines for more than 3 months medicines at a time."
+      "description": "Please enclose the ORIGINAL Prescription along with the Medical claim/s and forward it to CHSS-Accounts for processing the claim."
     },
     {
       "number": 13,
-      "description": "Kindly fill the reimbursement Form (CHSS FORM-7) properly and resubmit it to Accounts. [Signature missing]"
+      "description": "Doctor has not mentioned the duration for the medicines in the Prescription."
     },
     {
       "number": 14,
-      "description": "Medicines purchased are inadmissible under CHSS /CSMA Rules. Hence returned unpassed."
+      "description": "For beneficiaries going on outstation trips, medicines purchased for more than one month require copies of the onward and return journey tickets to be attached along with the medical claim."
     },
     {
       "number": 15,
-      "description": "Please enclose ORIGINAL REFERRAL FORM along with the Medical claims and forward to CHSS-Accounts for processing the claim."
+      "description": "For beneficiaries travelling abroad, please attach copies of both onward and return tickets along with a copy of the VISA when submitting the medical claim."
     },
     {
       "number": 16,
-      "description": "Patient Name & Doctor Name is not mentioned in the Tax Invoice/ Cash Bill."
+      "description": "There is a delay in purchasing the medicines. As per the rules, medicines must be purchased within SEVEN DAYS from the date of the prescription."
+    },
+    {
+      "number": 17,
+      "description": "The beneficiary has attained the age of 25 years. Hence the medical claim cannot be processed if the consultation date is after attaining 25 years of age."
+    },
+    {
+      "number": 18,
+      "description": "AMO cannot prescribe medicines for more than ONE Month. Please obtain justification for issuing a prescription for more than ONE Month."
     }
   ]
 }

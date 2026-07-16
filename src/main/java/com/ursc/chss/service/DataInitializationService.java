@@ -18,10 +18,6 @@ import java.sql.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Initializes the MySQL database with data from SQLite and Rejections.json.
- * Runs once at application startup if the database is empty.
- */
 @Service
 public class DataInitializationService {
 
@@ -45,9 +41,6 @@ public class DataInitializationService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Migrates data from SQLite and JSON sources if MySQL tables are empty.
-     */
     @PostConstruct
     @Transactional
     public void initializeData() {
@@ -55,9 +48,6 @@ public class DataInitializationService {
         migrateEmployees();
     }
 
-    /**
-     * Loads rejection reasons from Rejections.json into MySQL.
-     */
     private void migrateRejectionReasons() {
         if (rejectionReasonRepository.count() > 0) {
             log.info("Rejection reasons already exist in database. Skipping migration.");
@@ -88,9 +78,6 @@ public class DataInitializationService {
         }
     }
 
-    /**
-     * Migrates employee records from SQLite to MySQL.
-     */
     private void migrateEmployees() {
         if (employeeRepository.count() > 0) {
             log.info("Employees already exist in database. Skipping migration.");

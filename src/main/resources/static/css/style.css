@@ -5,36 +5,36 @@
 /* ---------- CSS Variables ---------- */
 :root {
   --white: #ffffff;
-  --navy: #0a1f44;
-  --navy-light: #132d5e;
-  --navy-mid: #1e3a6e;
-  --sky: #d6e6ff;
-  --sky-light: #eef4fb;
-  --sky-dark: #6b9ce6;
-  --yellow: #f5c518;
-  --yellow-light: #fff8dd;
-  --yellow-dark: #d4a800;
-  --black: #0f1419;
-  --gray-50: #f8f9fb;
-  --gray-100: #eef0f4;
-  --gray-200: #dde0e6;
-  --gray-300: #b8bcc6;
-  --gray-400: #8b90a0;
-  --gray-500: #636878;
-  --gray-600: #4a4f5e;
-  --gray-700: #2d3140;
-  --red: #dc3545;
-  --green: #28a745;
-  --success: #28a745;
-  --error: #dc3545;
+  --navy: #1a365d;
+  --navy-light: #2a4a7f;
+  --navy-mid: #3d5a99;
+  --sky: #dbeafe;
+  --sky-light: #f0f7ff;
+  --sky-dark: #60a5fa;
+  --yellow: #fbbf24;
+  --yellow-light: #fffbeb;
+  --yellow-dark: #d97706;
+  --black: #1a1a2e;
+  --gray-50: #f8fafc;
+  --gray-100: #eef2f6;
+  --gray-200: #dde3ea;
+  --gray-300: #b8c2cc;
+  --gray-400: #8b95a5;
+  --gray-500: #64748b;
+  --gray-600: #4a5568;
+  --gray-700: #2d3748;
+  --red: #ef4444;
+  --green: #22c55e;
+  --success: #22c55e;
+  --error: #ef4444;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --shadow-sm: 0 1px 3px rgba(10, 31, 68, 0.05);
-  --shadow: 0 4px 16px rgba(10, 31, 68, 0.07);
-  --shadow-lg: 0 8px 32px rgba(10, 31, 68, 0.10);
+  --shadow-sm: 0 1px 3px rgba(26, 54, 93, 0.06);
+  --shadow: 0 4px 16px rgba(26, 54, 93, 0.08);
+  --shadow-lg: 0 8px 32px rgba(26, 54, 93, 0.12);
   --radius-sm: 8px;
-  --radius: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --fs-base: 20px;
 }
 
@@ -43,7 +43,7 @@
 html { font-size: var(--fs-base); -webkit-font-smoothing: antialiased; }
 body {
   font-family: var(--font);
-  background: var(--gray-50);
+  background: linear-gradient(135deg, #f0f7ff 0%, #f8fafc 50%, #f0f7ff 100%);
   color: var(--black);
   line-height: 1.6;
   min-height: 100vh;
@@ -58,9 +58,26 @@ a:hover { color: var(--navy-light); }
   flex-direction: column;
 }
 
-/* ---------- Header ---------- */
+/* ---------- Page Header ---------- */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.page-header h1 {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+.page-header p {
+  font-size: 17px;
+  color: var(--gray-500);
+}
 
-/* ---------- Main Content ---------- */
+/* ---------- Header ---------- */
 .main-content {
   flex: 1;
   padding: 24px 32px;
@@ -82,12 +99,13 @@ a:hover { color: var(--navy-light); }
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  border: 1px solid var(--gray-100);
+  border: 1px solid rgba(219, 234, 254, 0.6);
   overflow: hidden;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
 .card:hover {
   box-shadow: var(--shadow-lg);
+  border-color: var(--sky);
 }
 .card-body {
   padding: 24px;
@@ -104,6 +122,7 @@ a:hover { color: var(--navy-light); }
   display: flex;
   align-items: center;
   gap: 10px;
+  letter-spacing: 0.01em;
 }
 /* ---------- Form ---------- */
 .form-group {
@@ -116,7 +135,7 @@ a:hover { color: var(--navy-light); }
   display: block;
   font-size: 16px;
   font-weight: 700;
-  color: var(--black);
+  color: var(--navy);
   margin-bottom: 7px;
 }
 .form-control {
@@ -157,7 +176,7 @@ select.form-control {
 }
 .input-prefix {
   padding: 12px 16px;
-  background: var(--gray-50);
+  background: var(--sky-light);
   border: 1.5px solid var(--gray-200);
   border-right: none;
   border-radius: var(--radius) 0 0 var(--radius);
@@ -244,9 +263,9 @@ select.form-control {
 .reason-row {
   margin-bottom: 12px;
   padding: 14px;
-  background: var(--gray-50);
+  background: var(--sky-light);
   border-radius: var(--radius);
-  border: 1px solid var(--gray-100);
+  border: 1px solid rgba(219, 234, 254, 0.6);
 }
 .reason-row:last-child { margin-bottom: 0; }
 .reason-select-wrapper {
@@ -392,15 +411,14 @@ select.form-control {
   gap: 12px;
   justify-content: flex-end;
   padding: 22px 28px;
-  background: var(--white);
-  border-top: 1px solid var(--gray-100);
+  background: var(--sky-light);
+  border-top: 1px solid rgba(219, 234, 254, 0.6);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 /* ---------- Preview ---------- */
 .preview-card {
-  position: sticky;
-  top: 100px;
+  top: 24px;
 }
 .preview-body {
   padding: 0;

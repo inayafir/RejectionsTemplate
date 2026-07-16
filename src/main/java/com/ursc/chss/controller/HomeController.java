@@ -3,13 +3,8 @@ package com.ursc.chss.controller;
 import com.ursc.chss.dto.LetterFormDto;
 import com.ursc.chss.model.Employee;
 import com.ursc.chss.model.GeneratedLetter;
-import com.ursc.chss.model.RejectionReason;
-import com.ursc.chss.repository.EmployeeRepository;
-import com.ursc.chss.repository.GeneratedLetterRepository;
-import com.ursc.chss.repository.RejectionReasonRepository;
 import com.ursc.chss.service.EmployeeService;
 import com.ursc.chss.service.LetterService;
-import jakarta.validation.Valid;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
@@ -30,20 +24,11 @@ public class HomeController {
 
     private final EmployeeService employeeService;
     private final LetterService letterService;
-    private final EmployeeRepository employeeRepository;
-    private final GeneratedLetterRepository generatedLetterRepository;
-    private final RejectionReasonRepository rejectionReasonRepository;
 
     public HomeController(EmployeeService employeeService,
-                          LetterService letterService,
-                          EmployeeRepository employeeRepository,
-                          GeneratedLetterRepository generatedLetterRepository,
-                          RejectionReasonRepository rejectionReasonRepository) {
+                          LetterService letterService) {
         this.employeeService = employeeService;
         this.letterService = letterService;
-        this.employeeRepository = employeeRepository;
-        this.generatedLetterRepository = generatedLetterRepository;
-        this.rejectionReasonRepository = rejectionReasonRepository;
     }
 
     @GetMapping("/")
@@ -74,7 +59,7 @@ public class HomeController {
 
     @PostMapping("/generate")
     public String generateLetter(@ModelAttribute("letterForm") LetterFormDto dto,
-                                  BindingResult result, Model model) {
+                                  org.springframework.validation.BindingResult result, Model model) {
         if (dto.getStaffId() == null || dto.getStaffId().trim().isEmpty()) {
             model.addAttribute("error", "Please search and select an employee.");
             model.addAttribute("rejectionReasons", letterService.getAllRejectionReasons());
@@ -205,7 +190,7 @@ public class HomeController {
     public String regenerateLetter(@PathVariable Long id) {
         GeneratedLetter existing = letterService.getLetterById(id);
         if (existing == null) {
-            return "redirect:/history?error=Letter not found";
+            return "redirect:/?error=Letter not found";
         }
 
         LetterFormDto dto = new LetterFormDto();

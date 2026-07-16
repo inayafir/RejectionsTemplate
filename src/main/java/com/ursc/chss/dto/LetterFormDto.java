@@ -5,9 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 
-/**
- * DTO for the rejection letter generation form.
- */
 public class LetterFormDto {
 
     private Long letterId;
@@ -32,9 +29,7 @@ public class LetterFormDto {
     private Double amount;
 
     private List<String> selectedReasonIds;
-
     private List<String> customReasons;
-
     private String action;
 
     public LetterFormDto() {}

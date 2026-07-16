@@ -1,6 +1,5 @@
 package com.ursc.chss.service;
 
-import com.itextpdf.html2pdf.HtmlConverter;
 import com.ursc.chss.dto.LetterFormDto;
 import com.ursc.chss.model.Employee;
 import com.ursc.chss.model.GeneratedLetter;
@@ -24,10 +23,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service for generating and managing rejection letters.
- * Handles PDF generation, template population, and letter CRUD.
- */
 @Service
 public class LetterService {
 
@@ -68,10 +63,6 @@ public class LetterService {
         return generatedLetterRepository.findByIssueDateBetweenOrderByCreatedAtDesc(from, to);
     }
 
-    /**
-     * Generates a PDF rejection letter from the form data.
-     * Resolves employee, collects rejection reasons, populates the HTML template, and produces a PDF.
-     */
     @Transactional
     public GeneratedLetter generateLetter(LetterFormDto dto) throws Exception {
         Employee employee = employeeRepository.findById(dto.getStaffId())
@@ -158,10 +149,6 @@ public class LetterService {
         return saved;
     }
 
-    /**
-     * Populates the Template.html with actual letter data.
-     * Reads the template from classpath, replaces placeholders, and builds the final HTML.
-     */
     private String generateHtml(Employee employee, LocalDate issueDate,
                                  String expenseDates, Double amount,
                                  List<String> reasons) {
@@ -181,6 +168,19 @@ public class LetterService {
             String formattedDate = issueDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             String formattedAmount = String.format("%.0f", amount);
 
+            template = template.replace("{{ org_name }}", "U R Rao Satellite Centre");
+            template = template.replace("{{ dept_name }}", "Finance and Accounts");
+            template = template.replace("{{ staff_label }}", "Staff No:");
+            template = template.replace("{{ date_label }}", "Date:");
+            template = template.replace("{{ subject }}", "SUBJECT: Return of CHSS Claim for Reimbursement of Medical Expenses Under CHSS / CSMA Rule");
+
+            String bodyText = "Your claim(s) towards reimbursement of medical expenses dated " +
+                escapeHtml(expenseDates.isEmpty() ? formattedDate : expenseDates) +
+                " for Rs. " + formattedAmount + "/- is/are returned unpassed on account of reason(s) mentioned below:";
+            template = template.replace("{{ body_text }}", bodyText);
+
+            template = template.replace("{{ officer_title }}", "Senior Accounts Officer");
+            template = template.replace("{{ to_label }}", "To,");
             template = template.replace("{{ staff_id }}", escapeHtml(employee.getStaffId()));
             template = template.replace("{{ issue_date }}", formattedDate);
             template = template.replace("{{ medical_expense_dates }}", escapeHtml(expenseDates));
@@ -190,7 +190,6 @@ public class LetterService {
             template = template.replace("{{ address_line2 }}", escapeHtml(addressParts[1]));
             template = template.replace("{{ address_line3 }}", escapeHtml(addressParts[2]));
 
-            // Replace the Mustache-style loop with actual HTML list
             String reasonsBlock = "    <ol>\n" +
                 "        {% for reason in reasons %}\n" +
                 "        <li>{{ reason }}</li>\n" +
@@ -205,9 +204,6 @@ public class LetterService {
         }
     }
 
-    /**
-     * Splits a combined address into up to 3 lines for the letter template.
-     */
     private String[] splitAddress(String address) {
         if (address == null || address.isEmpty()) {
             return new String[]{"", "", ""};
