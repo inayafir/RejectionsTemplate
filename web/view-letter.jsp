@@ -30,21 +30,21 @@
             <div class="card">
                 <div class="card-body" style="padding: 0;">
                     <div class="pdf-viewer" style="width: 100%; height: 75vh;">
-                        <iframe src="${pageContext.request.contextPath}/chss/print/${letter.letterId}"
+                        <iframe src="${pageContext.request.contextPath}/print/${letter.letterId}"
                                 style="width: 100%; height: 100%; border: none;" frameborder="0"></iframe>
                     </div>
                 </div>
                 <div class="actions-bar">
-                    <a href="${pageContext.request.contextPath}/chss/download/${letter.letterId}" class="btn btn-yellow">
+                    <a href="${pageContext.request.contextPath}/download/${letter.letterId}" class="btn btn-yellow">
                         Download PDF
                     </a>
-                    <a href="${pageContext.request.contextPath}/chss/print/${letter.letterId}" class="btn btn-secondary" target="_blank">
+                    <a href="${pageContext.request.contextPath}/print/${letter.letterId}" class="btn btn-secondary" target="_blank">
                         Print
                     </a>
-                    <a href="${pageContext.request.contextPath}/chss/edit/${letter.letterId}" class="btn btn-secondary">
+                    <a href="${pageContext.request.contextPath}/edit/${letter.letterId}" class="btn btn-secondary">
                         Edit
                     </a>
-                    <form method="post" action="${pageContext.request.contextPath}/chss/regenerate/${letter.letterId}" style="display:inline;">
+                    <form method="post" action="${pageContext.request.contextPath}/regenerate/${letter.letterId}" style="display:inline;">
                         <button type="submit" class="btn btn-secondary">
                             Regenerate
                         </button>

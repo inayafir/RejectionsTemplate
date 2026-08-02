@@ -3,24 +3,27 @@
 A navigation map of every file in the module, so the module can be debugged
 without reading every Java file.
 
-All URLs are scoped under `/chss/...` and prefixed with
+All servlet URL patterns are **relative to the context** (no `/chss/...`
+prefix) and every JSP link/action is prefixed with
 `${pageContext.request.contextPath}` (JSP) / `window.CONTEXT_PATH` (JavaScript),
-so nothing depends on the deployment context.
+so nothing depends on the deployment context. If the short patterns collide
+with an existing Sandesh servlet, rename them together — see
+`web/WEB-INF/CHSS_SERVLET_MAPPINGS.txt`.
 
 ---
 
 ## 1. URL map (servlet → JSP)
 
-| URL (relative to context)  | Method | Servlet                                | What happens |
-|----------------------------|--------|----------------------------------------|--------------|
-| `/chss/generate`           | GET    | `LetterServlet.showForm()`             | Forwards to `generate.jsp` |
-| `/chss/generate`           | POST   | `LetterServlet.generateLetter()`       | Validates, generates letter, redirects to `/chss/view/{id}`; on error re-forwards to `generate.jsp` with an `error` attribute |
-| `/chss/view/{id}`          | GET    | `LetterServlet.viewLetter()`           | Forwards to `view-letter.jsp` |
-| `/chss/edit/{id}`          | GET    | `LetterServlet.editLetter()`           | Prefills `generate.jsp` from the stored snapshot (`editMode=true`) |
-| `/chss/download/{id}`      | GET    | `LetterServlet.streamPdf(attachment)`  | Streams the PDF file with `Content-Disposition: attachment` |
-| `/chss/print/{id}`         | GET    | `LetterServlet.streamPdf(inline)`      | Streams the PDF file inline (used by the `<iframe>` in `view-letter.jsp`) |
-| `/chss/regenerate/{id}`    | POST   | `LetterServlet.regenerateLetter()`     | Creates a new letter from stored data, redirects to `/chss/view/{newId}` |
-| `/chss/employee-search?q=` | GET    | `EmployeeSearchServlet.doGet()`        | Returns a JSON array of matching employees (autocomplete) |
+| URL (relative to context) | Method | Servlet                                | What happens |
+|---------------------------|--------|----------------------------------------|--------------|
+| `/generate`               | GET    | `LetterServlet.showForm()`             | Forwards to `generate.jsp` |
+| `/generate`               | POST   | `LetterServlet.generateLetter()`       | Validates, generates letter, redirects to `/view/{id}`; on error re-forwards to `generate.jsp` with an `error` attribute |
+| `/view/{id}`              | GET    | `LetterServlet.viewLetter()`           | Forwards to `view-letter.jsp` |
+| `/edit/{id}`              | GET    | `LetterServlet.editLetter()`           | Prefills `generate.jsp` from the stored snapshot (`editMode=true`) |
+| `/download/{id}`          | GET    | `LetterServlet.streamPdf(attachment)`  | Streams the PDF file with `Content-Disposition: attachment` |
+| `/print/{id}`             | GET    | `LetterServlet.streamPdf(inline)`      | Streams the PDF file inline (used by the `<iframe>` in `view-letter.jsp`) |
+| `/regenerate/{id}`        | POST   | `LetterServlet.regenerateLetter()`     | Creates a new letter from stored data, redirects to `/view/{newId}` |
+| `/employee-search?q=`     | GET    | `EmployeeSearchServlet.doGet()`        | Returns a JSON array of matching employees (autocomplete) |
 
 JSPs forward to **no** servlet; they submit/link to the URLs above. The only
 servlet that forwards to a JSP is `LetterServlet`.
@@ -31,14 +34,13 @@ servlet that forwards to a JSP is `LetterServlet`.
 
 | Class | Why it exists | Who calls it |
 |-------|---------------|--------------|
-| `servlet.LetterServlet` | Main workflow: render form, generate/edit/view/regenerate, stream PDFs | `generate.jsp` (form POST + edit link), `view-letter.jsp` (view/download/print/edit/regenerate links); mapped via `@WebServlet` (or web.xml) |
-| `servlet.EmployeeSearchServlet` | Backs the "Search Staff" autocomplete | JavaScript `fetch()` in `generate.jsp` |
-| `listener.AppContextListener` | Runs at webapp startup: builds DAOs + `LetterService`, seeds reasons, sets the PDF storage dir as a context attribute | Servlet container (`@WebListener` / web.xml) |
+| `servlet.LetterServlet` | Main workflow: render form, generate/edit/view/regenerate, stream PDFs | `generate.jsp` (form POST + edit link), `view-letter.jsp` (view/download/print/edit/regenerate links); mapped via `@WebServlet` (or web.xml). Instantiates a fresh `LetterService` per request |
+| `servlet.EmployeeSearchServlet` | Backs the "Search Staff" autocomplete | JavaScript `fetch()` in `generate.jsp`; instantiates a fresh `LetterService` per request |
 | `service.LetterService` | All business logic: resolve reasons, format dates/amount, generate + persist letter | `LetterServlet`, `EmployeeSearchServlet` (via `getEmployeeDAO()`) |
 | `service.PdfGenerator` | Renders `src/templates/Template.html` and converts it to an A4 PDF | `LetterService.generateLetter()` |
-| `service.AppDataInitializer` | Seeds the `rejection_reasons` table on first startup from `Rejections.json` (built-in 18 defaults as fallback) | `AppContextListener.contextInitialized()` |
+| `service.PdfStorage` | THE single place that decides the PDF storage directory (placeholder to change in the office) | `LetterServlet.storageDir()` |
 | `dao.EmployeeDAO` | SQL against the organisation's existing employee table (placeholder names) | `LetterService` (lookup by staff id), `EmployeeSearchServlet` (search) |
-| `dao.RejectionReasonDAO` | SQL against the module's `rejection_reasons` table | `LetterService`, `AppDataInitializer` |
+| `dao.RejectionReasonDAO` | SQL against the module's `rejection_reasons` table (read-only; seeded by schema) | `LetterService` |
 | `dao.GeneratedLetterDAO` | SQL against the module's `generated_letters` table | `LetterService` |
 | `db.DatabaseAdapter` | THE single database-connection point; contains the Sandesh connection placeholder | All three DAOs (`DatabaseAdapter.getConnection()`) |
 | `dto.LetterFormDto` | Form-backing bean bound from request parameters | `LetterServlet` (show/edit/bind) |
@@ -52,8 +54,8 @@ servlet that forwards to a JSP is `LetterServlet`.
 
 | JSP | Submits to (servlet) | Forwarded back to it by (servlet) |
 |-----|----------------------|-----------------------------------|
-| `generate.jsp` | `LetterServlet` `POST /chss/generate` (the form); JS autocomplete calls `EmployeeSearchServlet` `GET /chss/employee-search?q=` | `LetterServlet` — `showForm()`, `editLetter()`, `renderFormError()` |
-| `view-letter.jsp` | none (links/buttons only): `LetterServlet` `/chss/view/{id}` (iframe), `/chss/download/{id}`, `/chss/print/{id}`, `/chss/edit/{id}`, `/chss/regenerate/{id}` | `LetterServlet` — `viewLetter()` |
+| `generate.jsp` | `LetterServlet` `POST /generate` (the form); JS autocomplete calls `EmployeeSearchServlet` `GET /employee-search?q=` | `LetterServlet` — `showForm()`, `editLetter()`, `renderFormError()` |
+| `view-letter.jsp` | none (links/buttons only): `LetterServlet` `/view/{id}` (iframe), `/download/{id}`, `/print/{id}`, `/edit/{id}`, `/regenerate/{id}` | `LetterServlet` — `viewLetter()` |
 
 `view-letter.jsp` reads the `letter` request attribute (set by `viewLetter()`);
 `generate.jsp` reads `letterForm`, `rejectionReasons`, `editMode`,
@@ -78,7 +80,7 @@ servlet that forwards to a JSP is `LetterServlet`.
 ### `generate.jsp` inline script
 | Function | Calls which endpoint | Notes |
 |----------|----------------------|-------|
-| autocomplete handler | `GET /chss/employee-search?q=<query>` | Debounced `fetch` on staff search input |
+| autocomplete handler | `GET /employee-search?q=<query>` | Debounced `fetch` on staff search input |
 | `selectEmployee(emp)` | none | Fills the hidden fields + employee card + preview |
 | `addExpenseDate()` | none | Adds an expense-date row |
 | `addReason(selectedId)` | none | Adds a reason row (used by edit mode) |
@@ -103,12 +105,11 @@ Table/column names are placeholder constants at the top of `EmployeeDAO`.
 |-------|---------------|----------|
 | `SELECT id, reason_number, description, active FROM rejection_reasons WHERE active = 1 ORDER BY reason_number ASC` | `findAllActiveOrderByNumberAsc()` | Reasons dropdown in `generate.jsp` |
 | `SELECT id, reason_number, description, active FROM rejection_reasons WHERE id = ?` | `findById()` | Resolving selected reason ids to text when generating |
-| `SELECT COUNT(*) FROM rejection_reasons` | `count()` | Seeding check |
-| `INSERT INTO rejection_reasons (reason_number, description, active) VALUES (?, ?, 1)` | `insert()` | Seeding |
 | `INSERT INTO generated_letters (staff_id, employee_name, address_line_1, address_line_2, locality, city, pincode, issue_date, medical_expense_dates, amount, selected_reasons, selected_reason_ids, custom_reasons, pdf_path, created_at) VALUES (?, ...)` | `insert()` | Persisting a generated letter |
 | `SELECT letter_id, staff_id, employee_name, address_line_1, address_line_2, locality, city, pincode, issue_date, medical_expense_dates, amount, selected_reasons, selected_reason_ids, custom_reasons, pdf_path, created_at FROM generated_letters WHERE letter_id = ?` | `findById()` | View/edit/download/print/regenerate |
 
-Schema for these two tables: `web/WEB-INF/sql/chss_schema.sql`.
+Schema for these two tables, including the seed for the 18 reasons:
+`web/WEB-INF/sql/chss_schema.sql`.
 
 ---
 
@@ -116,8 +117,8 @@ Schema for these two tables: `web/WEB-INF/sql/chss_schema.sql`.
 
 ```
 generate.jsp
-   │  user fills form (employee selected via autocomplete → /chss/employee-search)
-   ▼  POST /chss/generate
+   │  user fills form (employee selected via autocomplete → /employee-search)
+   ▼  POST /generate
 LetterServlet.generateLetter()
    │  binds LetterFormDto, validates (employee chosen, ≥1 reason)
    ▼
@@ -132,14 +133,15 @@ PdfGenerator.generateHtml(employee, issueDate, expenseDates, amount, reasons)
    ▼
 PdfGenerator.createPdf(html, storageDir, fileName)
    │  iText 7 html2pdf writes A4 PDF file to <webapp>/generated_letters/
+   │  (directory chosen by PdfStorage.resolveStorageDir())
    ▼
 GeneratedLetterDAO.insert(letter)                  ────►  MySQL (generated_letters)
    │  row saved, letterId assigned
    ▼
-redirect → /chss/view/{letterId}
+redirect → /view/{letterId}
    ▼
 view-letter.jsp  (loads from LetterServlet.viewLetter(), row via GeneratedLetterDAO.findById)
-   │  <iframe src="/chss/print/{letterId}">
+   │  <iframe src="/print/{letterId}">
    ▼
 LetterServlet.streamPdf(inline)
    │  GeneratedLetterDAO.findById(letterId), opens pdfPath, streams bytes
@@ -151,9 +153,10 @@ Browser renders the PDF (Download uses the same stream with attachment dispositi
 * **Employee dropdown empty / "Employee not found"** → check `DatabaseAdapter`
   (connection mechanism) and `EmployeeDAO` (table/column names).
 * **Reasons dropdown empty** → `rejection_reasons` table not created/seeded
-  (run `chss_schema.sql`; watch for the `[CHSS] Seeded ...` console line).
+  (run `chss_schema.sql`, which also inserts the 18 reasons).
 * **PDF generation error** → iText jars missing from `lib/`, or
-  `src/templates/Template.html` not in `WEB-INF/classes/`.
+  `src/templates/Template.html` not in `WEB-INF/classes/templates/`.
 * **404s on links/buttons** → a URL pattern is not registered (check the
   `@WebServlet` annotations vs web.xml — see `CHSS_SERVLET_MAPPINGS.txt`).
-* **Any module failure** → the `[CHSS]` lines in the Tomcat console.
+* **Database errors** → `DatabaseAdapter.getConnection()` is still the
+  placeholder and needs the Sandesh connection mechanism.

@@ -13,9 +13,9 @@ import java.util.List;
 /**
  * Data access for the {@code rejection_reasons} configuration table.
  *
- * <p>Reasons are seeded automatically by {@code AppDataInitializer} on first
- * startup (from {@code Rejections.json} on the classpath, with built-in
- * defaults as fallback).
+ * <p>The 18 standard reasons are seeded by {@code web/WEB-INF/sql/chss_schema.sql}
+ * (INSERT IGNORE statements - safe to re-run), so there is no runtime seeding.
+ * This class only reads.
  */
 public class RejectionReasonDAO {
 
@@ -54,40 +54,6 @@ public class RejectionReasonDAO {
             throw new RuntimeException("Failed to load rejection reason id " + id, e);
         }
         return null;
-    }
-
-    /** Returns the number of rows in the table (used by the seeder). */
-    public long count() {
-        String sql = "SELECT COUNT(*) FROM " + TABLE;
-        try (Connection conn = DatabaseAdapter.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getLong(1);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to count rejection reasons", e);
-        }
-        return 0;
-    }
-
-    /** Inserts a new reason. Returns the generated id, or -1 on failure. */
-    public long insert(int reasonNumber, String description) {
-        String sql = "INSERT INTO " + TABLE + " (reason_number, description, active) VALUES (?, ?, 1)";
-        try (Connection conn = DatabaseAdapter.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, reasonNumber);
-            ps.setString(2, description);
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) {
-                    return keys.getLong(1);
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to insert rejection reason", e);
-        }
-        return -1;
     }
 
     private RejectionReason mapReason(ResultSet rs) throws SQLException {

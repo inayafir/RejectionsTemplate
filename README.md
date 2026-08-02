@@ -20,10 +20,9 @@ project (Eclipse project, Tomcat, MySQL).
 ## Module layout
 
 ```
-src/            Java classes + PDF template + Rejections.json (copy into Sandesh src/)
+src/            Java classes + PDF template (copy into Sandesh src/)
 web/            JSPs, CSS, JS, schema SQL, servlet-mapping reference (copy into Sandesh web/)
 lib/            List of JARs that must be copied into the Sandesh lib/ folder
-Rejections.json Canonical list of the 18 rejection reasons (config)
 ```
 
 ## Files to copy into the Sandesh project
@@ -32,7 +31,6 @@ Rejections.json Canonical list of the 18 rejection reasons (config)
 |-------------------------------|------------------------------------------------------------|
 | `src/com/ursc/chss/...`       | `<project>/src/com/ursc/chss/...`                          |
 | `src/templates/Template.html` | `<project>/src/templates/Template.html` (PDF letter template) |
-| `src/Rejections.json`         | `<project>/src/Rejections.json`                            |
 | `web/generate.jsp`            | `<project>/web/generate.jsp`                               |
 | `web/view-letter.jsp`         | `<project>/web/view-letter.jsp`                            |
 | `web/css/style.css`           | `<project>/web/css/style.css`                              |
@@ -41,12 +39,14 @@ Rejections.json Canonical list of the 18 rejection reasons (config)
 | `web/WEB-INF/CHSS_SERVLET_MAPPINGS.txt` | read it: web.xml entries (or keep the `@WebServlet` annotations) |
 | JARs listed in `lib/README.txt` | `<project>/lib/` (or `web/WEB-INF/lib/`)                 |
 
-See **INTEGRATION_GUIDE.md** for step-by-step instructions.
+See **INTEGRATION_GUIDE.md** for step-by-step instructions,
+**OFFICE_CHANGES.md** for the files edited in the office, and
+**SANDESH_DEPENDENCIES.md** for every remaining Sandesh assumption.
 
 ## What you will likely change in the office
 
-Only two files normally need editing to point the module at the real
-environment:
+Only three files normally need editing to point the module at the real
+environment (plus the schema, which is run once):
 
 ### 1. Database connection — `src/com/ursc/chss/db/DatabaseAdapter.java`
 
@@ -70,16 +70,19 @@ SELECT * FROM EMPLOYEE_TABLE WHERE STAFF_NUMBER = ?
 Change `EMPLOYEE_TABLE` and the column constants to match the real table. The
 SQL is written in the same shape as the existing Sandesh employee lookup.
 
+### 3. PDF storage directory — `src/com/ursc/chss/service/PdfStorage.java`
+
+The single place that decides where generated PDF files are written. Defaults
+to `<webapp>/generated_letters`. If Sandesh stores files elsewhere, change
+`PdfStorage.resolveStorageDir()` - no other file knows about storage.
+
 ## Other configuration points
 
-* `src/com/ursc/chss/listener/AppContextListener.java` — `resolveStorageDir()`
-  chooses where generated PDF files are written (defaults to
-  `<webapp>/generated_letters`).
 * `web/WEB-INF/sql/chss_schema.sql` — creates the two module-owned MySQL tables
-  (`rejection_reasons`, `generated_letters`). Run once.
-* `Rejections.json` — the 18 rejection reasons. Seeded into
-  `rejection_reasons` automatically on first startup (with built-in defaults as
-  a fallback if the file is missing).
+  (`rejection_reasons`, `generated_letters`) and seeds the 18 standard
+  rejection reasons (idempotent `INSERT IGNORE`). Run once.
+* `web/WEB-INF/CHSS_SERVLET_MAPPINGS.txt` — web.xml entries, if the Sandesh
+  project disables annotation scanning.
 
 ## What still depends on the Sandesh environment
 
@@ -92,10 +95,10 @@ SQL is written in the same shape as the existing Sandesh employee lookup.
 * **Container servlet API** — compiled against `javax.servlet` (Tomcat 8/9).
   On Tomcat 10+/`jakarta`, the servlet imports must be renamed (`javax.*` →
   `jakarta.*`).
-* **Entry point** — the module is reached via `GET <context>/chss/generate`;
-  link it from a Sandesh menu as appropriate. The JSPs use
-  `${pageContext.request.contextPath}` everywhere, so no context path is
-  hardcoded.
+* **Entry point** — the module is reached via `GET <context>/generate`; link
+  it from a Sandesh menu as appropriate. The servlet URL patterns are relative
+  to the context and the JSPs use `${pageContext.request.contextPath}`
+  everywhere, so no context path is hardcoded.
 
 ## Authentication
 

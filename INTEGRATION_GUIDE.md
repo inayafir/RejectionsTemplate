@@ -4,7 +4,8 @@ This guide explains how to copy the CHSS Rejection Letter Generator module into
 an existing Sandesh JSP/Servlet project and point it at the office environment.
 
 The module is deliberately written as plain JSP + Servlet + JDBC so it plugs
-into the existing project without any framework or standalone deployment.
+into the existing project without any framework or standalone deployment. It has
+no startup listener and no runtime seeding.
 
 ---
 
@@ -25,27 +26,25 @@ src/
 │   │   └── GeneratedLetterDAO.java
 │   ├── dto/
 │   │   └── LetterFormDto.java
-│   ├── listener/
-│   │   └── AppContextListener.java         (init, seeding, storage dir)
 │   ├── model/
 │   │   ├── Employee.java
 │   │   ├── GeneratedLetter.java
 │   │   └── RejectionReason.java
 │   ├── servlet/
-│   │   ├── EmployeeSearchServlet.java       (autocomplete JSON — /chss/employee-search)
-│   │   └── LetterServlet.java               (/chss/generate + view/edit/download/print/regenerate)
+│   │   ├── EmployeeSearchServlet.java      (autocomplete JSON — /employee-search)
+│   │   └── LetterServlet.java              (/generate + view/edit/download/print/regenerate)
 │   └── service/
-│       ├── AppDataInitializer.java         (seeds rejection_reasons)
+│       ├── PdfStorage.java                 (PDF storage dir — edit in office if needed)
 │       ├── LetterService.java
 │       └── PdfGenerator.java               (PDF generation, isolated)
-├── templates/
-│   └── Template.html                       (PDF letter template — goes to WEB-INF/classes/templates/)
-└── Rejections.json                         (goes to WEB-INF/classes/)
+└── templates/
+    └── Template.html                       (PDF letter template — goes to WEB-INF/classes/templates/)
 ```
 
-Because `templates/Template.html` and `Rejections.json` sit inside a source
-folder, Eclipse copies them to `web/WEB-INF/classes/...`, which is exactly where
-`PdfGenerator` and `AppDataInitializer` load them from (classpath).
+`templates/Template.html` is the only classpath resource. Because it sits
+inside a source folder, Eclipse copies it to `web/WEB-INF/classes/templates/`,
+which is exactly where `PdfGenerator` loads it from. There is no
+`Rejections.json` anymore — the 18 reasons are seeded by the schema script.
 
 ## 2. Which files go into `web/`
 
@@ -59,7 +58,7 @@ web/
 │   └── app.js
 └── WEB-INF/
     ├── sql/
-    │   └── chss_schema.sql                 (run once against the MySQL instance)
+    │   └── chss_schema.sql                 (run once against the MySQL instance — also seeds the 18 reasons)
     └── CHSS_SERVLET_MAPPINGS.txt           (web.xml entries — see section 6)
 ```
 
@@ -128,7 +127,7 @@ No other file reads connection settings.
   project uses: `javax.servlet.*` (Tomcat 8/9) or `jakarta.servlet.*`
   (Tomcat 10+). This module is written for `javax.servlet`; if the project uses
   `jakarta`, replace `javax.servlet` → `jakarta.servlet` in the imports of the
-  servlet/listener classes.
+  two servlet classes.
 * Check whether the project registers servlets in `web.xml`. If yes, use the
   mappings in `web/WEB-INF/CHSS_SERVLET_MAPPINGS.txt` instead of (or in
   addition to) the `@WebServlet` annotations — never double-register the same
@@ -139,18 +138,20 @@ No other file reads connection settings.
   The module isolates all JDBC inside the three `dao` classes, so adapting is
   localised.
 
+There is no `web.xml` listener to register — the module has no startup
+component.
+
 ## 7. How to verify the employee lookup
 
-1. Start the webapp. The console should show
-   `[CHSS] Module initialised. PDF storage: ...` (and, once the connection
-   mechanism is in place, `[CHSS] Seeded 18 rejection reasons.` on first run).
-2. Open `GET <context>/chss/generate`.
+1. Run `web/WEB-INF/sql/chss_schema.sql` once (creates both tables and seeds
+   the 18 reasons).
+2. Open `GET <context>/generate`.
 3. Type a known Staff Number (or partial name) in **Search Staff**. The
    autocomplete list should appear from the organisation's employee table.
 4. Select an employee. Name and address must auto-fill, and the live preview
    must update.
 5. Confirm the autocomplete endpoint directly:
-   * `GET <context>/chss/employee-search?q=ISO` → JSON array
+   * `GET <context>/employee-search?q=ISO` → JSON array
 
 If nothing appears, the usual cause is a wrong table/column name in
 `EmployeeDAO` (section 4) or the connection mechanism still missing from
@@ -160,26 +161,26 @@ If nothing appears, the usual cause is a wrong table/column name in
 
 1. On the generate page, select an employee, set dates and amount, choose at
    least one reason (or a custom reason), and click **Generate PDF**.
-2. You are taken to `/chss/view/<id>`, which streams the PDF inline (printed
-   via `/chss/print/<id>`).
+2. You are taken to `/view/<id>`, which streams the PDF inline (printed via
+   `/print/<id>`).
 3. Check the PDF layout and wording — it is produced from
    `src/templates/Template.html` and must look exactly like the original
    application's output.
 4. Verify **Download** (attachment), **Print** (inline), **Edit** (form
    prefilled from the stored snapshot), and **Regenerate** (new PDF created).
 5. The PDF file itself is written to `<webapp>/generated_letters/` (override in
-   `AppContextListener.resolveStorageDir()`).
+   `PdfStorage.resolveStorageDir()`).
 
 ## 9. Common integration mistakes
 
 * **Wrong servlet namespace** — mixing `javax`/`jakarta`. Match the container.
-* **Forgetting `Rejections.json` or `Template.html` in a source folder** — they
-  must land in `WEB-INF/classes/`; otherwise `[CHSS] Rejections.json not found`
-  is logged (defaults still seed) or PDF generation throws "Template resource
-  ... not found".
-* **Not creating the MySQL tables** — run `web/WEB-INF/sql/chss_schema.sql`
-  once. Without `rejection_reasons`, the dropdown is empty; without
-  `generated_letters`, generation fails.
+* **Forgetting `Template.html` in a source folder** — it must land in
+  `WEB-INF/classes/templates/`; otherwise PDF generation throws "Template
+  resource ... not found".
+* **Not creating the MySQL tables / not seeding** — run
+  `web/WEB-INF/sql/chss_schema.sql` once. Without `rejection_reasons`, the
+  dropdown is empty; without `generated_letters`, generation fails. The 18
+  reasons are seeded by the same script (`INSERT IGNORE` — re-running is safe).
 * **Not adding the JARs** — iText 7 (+ svg) and slf4j must be in the project's
   `lib/`. Missing iText causes `NoClassDefFoundError` at PDF time.
 * **DatabaseAdapter still a placeholder** — `getConnection()` throws
@@ -194,4 +195,4 @@ If nothing appears, the usual cause is a wrong table/column name in
   `EmployeeDAO` before testing the autocomplete.
 * **PDF storage dir not writable** — Tomcat user must be able to write to
   `<webapp>/generated_letters` (or change the directory in
-  `AppContextListener`).
+  `PdfStorage`).

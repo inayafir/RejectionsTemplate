@@ -17,8 +17,9 @@ import java.util.stream.Collectors;
 
 /**
  * Business logic for generating CHSS rejection letters. A plain Java service
- * class (no framework). Instantiated once by {@code AppContextListener} and
- * shared through the ServletContext.
+ * class (no framework). Instantiated per request by the servlets; the DAOs are
+ * stateless and every query opens/closes its own connection, so no shared
+ * instance or startup wiring is needed.
  */
 public class LetterService {
 

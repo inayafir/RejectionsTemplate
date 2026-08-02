@@ -30,7 +30,7 @@
                 <h1>Create Rejection Letter</h1>
             </div>
 
-            <form action="${pageContext.request.contextPath}/chss/generate" method="post" id="letterForm" class="form-preview-grid">
+            <form action="${pageContext.request.contextPath}/generate" method="post" id="letterForm" class="form-preview-grid">
                 <input type="hidden" name="employeeName" id="employeeName" value="${letterForm.employeeName}" />
                 <input type="hidden" name="addressLine1" id="addressLine1" value="${letterForm.addressLine1}" />
                 <input type="hidden" name="addressLine2" id="addressLine2" value="${letterForm.addressLine2}" />
@@ -169,7 +169,7 @@
                 return;
             }
             debounceTimer = setTimeout(function () {
-                fetch(CONTEXT_PATH + '/chss/employee-search?q=' + encodeURIComponent(query))
+                fetch(CONTEXT_PATH + '/employee-search?q=' + encodeURIComponent(query))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         resultsContainer.innerHTML = '';

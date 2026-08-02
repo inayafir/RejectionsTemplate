@@ -7,7 +7,9 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.ursc.chss.model.Employee;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,13 +43,13 @@ public final class PdfGenerator {
     public static String generateHtml(Employee employee, LocalDate issueDate,
                                       String expenseDates, Double amount,
                                       List<String> reasons) {
-        try (var in = PdfGenerator.class.getClassLoader()
+        try (InputStream in = PdfGenerator.class.getClassLoader()
                 .getResourceAsStream("templates/Template.html")) {
             if (in == null) {
                 throw new IllegalStateException("Template resource 'templates/Template.html' not found on classpath. "
                         + "Copy src/templates/Template.html into the Sandesh src/ folder.");
             }
-            String template = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            String template = new String(readAllBytes(in), StandardCharsets.UTF_8);
 
             String address = buildAddress(employee);
             String[] addressParts = splitAddress(address);
@@ -121,6 +123,20 @@ public final class PdfGenerator {
         } catch (IOException e) {
             throw new RuntimeException("Error generating PDF", e);
         }
+    }
+
+    /**
+     * Reads an entire stream into a byte array (Java 8 compatible - avoids
+     * {@code InputStream.readAllBytes()}, which requires Java 9+).
+     */
+    private static byte[] readAllBytes(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
     }
 
     private static String[] splitAddress(String address) {

@@ -1,9 +1,12 @@
 package com.ursc.chss.servlet;
 
+import com.ursc.chss.dao.EmployeeDAO;
+import com.ursc.chss.dao.GeneratedLetterDAO;
+import com.ursc.chss.dao.RejectionReasonDAO;
 import com.ursc.chss.dto.LetterFormDto;
-import com.ursc.chss.listener.AppContextListener;
 import com.ursc.chss.model.GeneratedLetter;
 import com.ursc.chss.service.LetterService;
+import com.ursc.chss.service.PdfStorage;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -25,27 +28,31 @@ import java.util.stream.Collectors;
  * Main workflow servlet of the CHSS Rejection Letter module.
  *
  * <ul>
- *   <li>{@code GET  /chss/generate}          - show the generate form</li>
- *   <li>{@code POST /chss/generate}          - create a letter, redirect to /chss/view/{id}</li>
- *   <li>{@code GET  /chss/view/{id}}         - view a letter (PDF viewer)</li>
- *   <li>{@code GET  /chss/edit/{id}}         - edit a letter (generate form, prefilled)</li>
- *   <li>{@code GET  /chss/download/{id}}     - download the PDF</li>
- *   <li>{@code GET  /chss/print/{id}}        - stream the PDF inline for printing</li>
- *   <li>{@code POST /chss/regenerate/{id}}   - regenerate from the stored data</li>
+ *   <li>{@code GET  /generate}          - show the generate form</li>
+ *   <li>{@code POST /generate}          - create a letter, redirect to /view/{id}</li>
+ *   <li>{@code GET  /view/{id}}         - view a letter (PDF viewer)</li>
+ *   <li>{@code GET  /edit/{id}}         - edit a letter (generate form, prefilled)</li>
+ *   <li>{@code GET  /download/{id}}     - download the PDF</li>
+ *   <li>{@code GET  /print/{id}}        - stream the PDF inline for printing</li>
+ *   <li>{@code POST /regenerate/{id}}   - regenerate from the stored data</li>
  * </ul>
  *
- * <p>All URLs are scoped under {@code /chss/...} so they do not collide with
- * existing Sandesh servlets, and the JSPs use
- * {@code ${pageContext.request.contextPath}} for every link/action, so the
- * module works under any Sandesh context path without hardcoding.
+ * <p>The URL patterns below are relative to the webapp context (the annotation
+ * itself has no context prefix, and the JSPs use
+ * {@code ${pageContext.request.contextPath}} for every link/action), so the
+ * module works under any Sandesh context path without hardcoding. The short
+ * patterns may be renamed (e.g. to {@code /chss/generate}) if they collide
+ * with an existing Sandesh servlet - see
+ * {@code web/WEB-INF/CHSS_SERVLET_MAPPINGS.txt} for the full list of places to
+ * rename together.
  */
 @WebServlet(urlPatterns = {
-        "/chss/generate",
-        "/chss/view/*",
-        "/chss/edit/*",
-        "/chss/download/*",
-        "/chss/print/*",
-        "/chss/regenerate/*"
+        "/generate",
+        "/view/*",
+        "/edit/*",
+        "/download/*",
+        "/print/*",
+        "/regenerate/*"
 })
 public class LetterServlet extends HttpServlet {
 
@@ -55,7 +62,7 @@ public class LetterServlet extends HttpServlet {
 
         String path = request.getServletPath();
 
-        if ("/chss/generate".equals(path)) {
+        if ("/generate".equals(path)) {
             showForm(request, response);
             return;
         }
@@ -64,16 +71,16 @@ public class LetterServlet extends HttpServlet {
         if (id == null) return;
 
         switch (path) {
-            case "/chss/view":
+            case "/view":
                 viewLetter(request, response, id);
                 break;
-            case "/chss/edit":
+            case "/edit":
                 editLetter(request, response, id);
                 break;
-            case "/chss/download":
+            case "/download":
                 streamPdf(request, response, id, "attachment");
                 break;
-            case "/chss/print":
+            case "/print":
                 streamPdf(request, response, id, "inline");
                 break;
             default:
@@ -87,12 +94,12 @@ public class LetterServlet extends HttpServlet {
 
         String path = request.getServletPath();
 
-        if ("/chss/generate".equals(path)) {
+        if ("/generate".equals(path)) {
             generateLetter(request, response);
             return;
         }
 
-        if ("/chss/regenerate".equals(path)) {
+        if ("/regenerate".equals(path)) {
             Long id = parseId(request, response);
             if (id == null) return;
             regenerateLetter(request, response, id);
@@ -278,16 +285,13 @@ public class LetterServlet extends HttpServlet {
     // ------------------------------------------------------------------
 
     private LetterService letterService(HttpServletRequest request) {
-        LetterService service = (LetterService) request.getServletContext()
-                .getAttribute(AppContextListener.KEY_LETTER_SERVICE);
-        if (service == null) {
-            throw new IllegalStateException("CHSS module not initialised");
-        }
-        return service;
+        // DAOs are stateless and connections are opened/closed per query, so a
+        // fresh service per request is cheap and needs no startup wiring.
+        return new LetterService(new EmployeeDAO(), new RejectionReasonDAO(), new GeneratedLetterDAO());
     }
 
     private String storageDir(HttpServletRequest request) {
-        return (String) request.getServletContext().getAttribute(AppContextListener.KEY_STORAGE_DIR);
+        return PdfStorage.resolveStorageDir(request.getServletContext());
     }
 
     private Long parseId(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -369,7 +373,7 @@ public class LetterServlet extends HttpServlet {
     private void redirectError(HttpServletRequest request, HttpServletResponse response, String message)
             throws IOException {
         String enc = URLEncoder.encode(message, StandardCharsets.UTF_8.name());
-        response.sendRedirect(request.getContextPath() + "/chss/generate?error=" + enc);
+        response.sendRedirect(request.getContextPath() + "/generate?error=" + enc);
     }
 
     private static String trimToNull(String value) {

@@ -1,6 +1,8 @@
 package com.ursc.chss.servlet;
 
-import com.ursc.chss.listener.AppContextListener;
+import com.ursc.chss.dao.EmployeeDAO;
+import com.ursc.chss.dao.RejectionReasonDAO;
+import com.ursc.chss.dao.GeneratedLetterDAO;
 import com.ursc.chss.model.Employee;
 import com.ursc.chss.service.LetterService;
 
@@ -16,7 +18,7 @@ import java.util.List;
 /**
  * Backs the "Search Staff" autocomplete on the generate page.
  *
- * <p>{@code GET /chss/employee-search?q=...} returns a JSON array of matching
+ * <p>{@code GET /employee-search?q=...} returns a JSON array of matching
  * employees, read directly from the organisation's existing employee table via
  * {@link LetterService#getEmployeeDAO()}.
  *
@@ -25,20 +27,15 @@ import java.util.List;
  * already exposes a matching lookup, the JavaScript in generate.jsp can be
  * pointed at that instead.
  */
-@WebServlet(urlPatterns = "/chss/employee-search")
+@WebServlet(urlPatterns = "/employee-search")
 public class EmployeeSearchServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        LetterService service = (LetterService) request.getServletContext()
-                .getAttribute(AppContextListener.KEY_LETTER_SERVICE);
-        if (service == null) {
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "CHSS module not initialised");
-            return;
-        }
+        LetterService service = new LetterService(new EmployeeDAO(), new RejectionReasonDAO(),
+                new GeneratedLetterDAO());
 
         String query = request.getParameter("q");
         List<Employee> employees = service.getEmployeeDAO().searchEmployees(query);
