@@ -1,0 +1,74 @@
+================================================================================
+CHSS REJECTION LETTER - SERVLET MAPPINGS
+================================================================================
+
+The Java servlets use Servlet 3.0 @WebServlet / @WebListener annotations, so no
+web.xml changes are needed when annotation scanning is enabled (the default for
+an Eclipse Dynamic Web Project on Tomcat).
+
+If the Sandesh project's web.xml sets metadata-complete="true" (annotation
+scanning OFF), register the same components in web.xml instead. Copy/paste the
+following blocks into the existing web/WEB-INF/web.xml and remove the
+annotations (or keep them - do NOT double-register).
+
+--------------------------------------------------------------------------------
+1) Context listener (initialises DAOs, seeds rejection reasons, storage dir)
+--------------------------------------------------------------------------------
+
+    <listener>
+        <listener-class>com.ursc.chss.listener.AppContextListener</listener-class>
+    </listener>
+
+--------------------------------------------------------------------------------
+2) Employee JSON API (autocomplete + single lookup)
+--------------------------------------------------------------------------------
+
+    <servlet>
+        <servlet-name>employeeApi</servlet-name>
+        <servlet-class>com.ursc.chss.servlet.EmployeeApiServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>employeeApi</servlet-name>
+        <url-pattern>/api/employees/*</url-pattern>
+    </servlet-mapping>
+
+--------------------------------------------------------------------------------
+3) Main workflow servlet (generate / view / edit / download / print / regenerate)
+--------------------------------------------------------------------------------
+
+    <servlet>
+        <servlet-name>letterServlet</servlet-name>
+        <servlet-class>com.ursc.chss.servlet.LetterServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>letterServlet</servlet-name>
+        <url-pattern>/generate</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>letterServlet</servlet-name>
+        <url-pattern>/view/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>letterServlet</servlet-name>
+        <url-pattern>/edit/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>letterServlet</servlet-name>
+        <url-pattern>/download/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>letterServlet</servlet-name>
+        <url-pattern>/print/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>letterServlet</servlet-name>
+        <url-pattern>/regenerate/*</url-pattern>
+    </servlet-mapping>
+
+--------------------------------------------------------------------------------
+URL conflicts
+--------------------------------------------------------------------------------
+If Sandesh already uses any of the patterns above, change the url-pattern in
+BOTH places: the @WebServlet annotation (and/or this web.xml block) AND the
+fetch() calls in web/js/app.js and the inline script in web/generate.jsp, which
+use CONTEXT_PATH + '/api/employees/...'.

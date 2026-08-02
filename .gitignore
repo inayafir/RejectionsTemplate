@@ -4,6 +4,9 @@ target/
 *.err
 *.original
 generated_letters/
+pdf-test-out/
+~$*
+*.docx
 .idea/
 *.iml
 .vscode/
