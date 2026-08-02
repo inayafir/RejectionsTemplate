@@ -1,11 +1,10 @@
 # CHSS Rejection Letter Generator (Sandesh Module)
 
 A JSP + Servlet module for the Sandesh intranet that generates CHSS rejection
-letters for URSC Finance & Accounts. This is the Sandesh-compatible version of
-the original application: every feature, workflow, UI element, validation, and
-PDF layout is preserved. Only the backend has been reworked from a Spring Boot
-standalone application into plain Servlets + JSPs + JDBC so it can be dropped
-into the existing Sandesh project.
+letters for URSC Finance & Accounts. Every feature, workflow, UI element,
+validation, and PDF layout is preserved; the module is written as plain
+Servlets + JSPs + JDBC so it can be manually copied into the existing Sandesh
+project (Eclipse project, Tomcat, MySQL).
 
 ## What the module does
 
@@ -52,16 +51,20 @@ environment:
 ### 1. Database connection — `src/com/ursc/chss/db/DatabaseAdapter.java`
 
 The single database abstraction. Every SQL query goes through
-`DatabaseAdapter.getConnection()`. Edit the constants (or swap the
-`DriverManager` call for the Sandesh JNDI DataSource) in this one file.
+`DatabaseAdapter.getConnection()`. It currently contains a clearly-marked
+placeholder: copy the database connection mechanism from an existing Sandesh
+module into this one method (JNDI DataSource, DriverManager, or a shared JDBC
+helper - whatever Sandesh uses).
 
 ### 2. Employee lookup SQL — `src/com/ursc/chss/dao/EmployeeDAO.java`
 
-The module reads the organisation's pre-existing employee table. The table name
-and column names are constants at the top of the class, e.g.:
+The module reads the organisation's pre-existing employee table (read-only).
+The table name and column names are placeholder constants at the top of the
+class, used by plain SQL of the same shape as the existing Sandesh employee
+lookup:
 
 ```sql
-SELECT STAFF_NUMBER, EMPLOYEE_NAME, ... FROM EMPLOYEE_TABLE WHERE STAFF_NUMBER = ?
+SELECT * FROM EMPLOYEE_TABLE WHERE STAFF_NUMBER = ?
 ```
 
 Change `EMPLOYEE_TABLE` and the column constants to match the real table. The
@@ -83,13 +86,14 @@ SQL is written in the same shape as the existing Sandesh employee lookup.
 * **MySQL schema/database** — the `chss_schema.sql` tables must be created in
   the MySQL instance Sandesh uses.
 * **Employee table** — the organisation's existing employee table (read-only).
-* **JARs** — MySQL driver, iText 7 (`html2pdf`), JSTL must be present in the
-  project's `lib/` (see `lib/README.txt`).
+* **JARs** — iText 7 (`html2pdf`) + slf4j must be present in the project's
+  `lib/` (see `lib/README.txt`). The MySQL driver is usually already present
+  because Sandesh talks to MySQL.
 * **Container servlet API** — compiled against `javax.servlet` (Tomcat 8/9).
   On Tomcat 10+/`jakarta`, the servlet imports must be renamed (`javax.*` →
-  `jakarta.*`) and the jakarta JSTL jars used.
-* **Entry point** — the module is reached via `GET <context>/generate`; link it
-  from a Sandesh menu as appropriate. The JSPs use
+  `jakarta.*`).
+* **Entry point** — the module is reached via `GET <context>/chss/generate`;
+  link it from a Sandesh menu as appropriate. The JSPs use
   `${pageContext.request.contextPath}` everywhere, so no context path is
   hardcoded.
 

@@ -1,7 +1,6 @@
 package com.ursc.chss.db;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
@@ -12,49 +11,21 @@ import java.sql.SQLException;
  * {@link #getConnection()}. This is the ONLY file that needs to be modified to
  * change database connectivity.
  *
- * <p>=========================================================================
- * SANDSH CONNECTION PLACEHOLDER - EDIT HERE
- * --------------------------------------------------------------------------
- * Replace the {@link DriverManager} mechanism below with whatever Sandesh uses
- * internally, for example a JNDI DataSource bound in Tomcat:
+ * <p>=======================================================================
+ * SANDSH CONNECTION PLACEHOLDER
+ * ------------------------------------------------------------------------
+ * Copy the database connection mechanism from an existing Sandesh module here.
  *
- * <pre>
- *     import javax.naming.Context;
- *     import javax.naming.InitialContext;
- *     import javax.sql.DataSource;
- *
- *     Context initCtx = new InitialContext();
- *     DataSource ds = (DataSource) initCtx.lookup("java:/comp/env/jdbc/chss");
- *     return ds.getConnection();
- * </pre>
+ * The module does not know how the existing Sandesh project obtains database
+ * connections (JNDI DataSource, DriverManager, a shared JDBC helper class,
+ * etc.), so no mechanism is implemented yet. Find an existing Sandesh module
+ * that reads the employee database, copy its connection code into
+ * {@link #getConnection()} below, and return a {@link Connection}.
  *
  * You do NOT need to touch any other file for connectivity.
- * =========================================================================
+ * ========================================================================
  */
 public final class DatabaseAdapter {
-
-    /** JDBC URL of the CHSS application database (MySQL). */
-    private static final String DB_URL =
-            "jdbc:mysql://localhost:3306/chss_db?useSSL=false&serverTimezone=UTC&characterEncoding=utf8";
-
-    /** Database user. */
-    private static final String DB_USER = "chss_user";
-
-    /** Database password. */
-    private static final String DB_PASSWORD = "chss_password";
-
-    /** JDBC driver class name. */
-    private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
-
-    static {
-        try {
-            Class.forName(DB_DRIVER);
-        } catch (ClassNotFoundException e) {
-            throw new ExceptionInInitializerError(
-                    "MySQL JDBC driver not found on classpath: " + DB_DRIVER
-                            + ". Add mysql-connector-j to the Sandesh lib/ folder.");
-        }
-    }
 
     private DatabaseAdapter() {
     }
@@ -66,7 +37,21 @@ public final class DatabaseAdapter {
      * @throws SQLException if a connection cannot be established
      */
     public static Connection getConnection() throws SQLException {
-        // Replace the following line with the Sandesh connection mechanism.
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        /*
+         * SANDSH CONNECTION PLACEHOLDER - EDIT HERE
+         * ----------------------------------------
+         * Copy the database connection mechanism from an existing Sandesh
+         * module here and return a java.sql.Connection. For example, if Sandesh
+         * uses a JNDI DataSource bound in Tomcat:
+         *
+         *     Context initCtx = new InitialContext();
+         *     DataSource ds = (DataSource) initCtx.lookup("java:/comp/env/jdbc/<name>");
+         *     return ds.getConnection();
+         *
+         * Use exactly the same mechanism an existing Sandesh module uses.
+         * Every SQL query in this module goes through this one method.
+         */
+        throw new UnsupportedOperationException(
+                "Copy the database connection mechanism from an existing Sandesh module here.");
     }
 }

@@ -17,8 +17,12 @@ import javax.servlet.annotation.WebListener;
  * <ol>
  *   <li>creates the DAOs and the {@link LetterService},</li>
  *   <li>seeds the {@code rejection_reasons} table on first run,</li>
- *   <li>stores shared objects as ServletContext attributes.</li>
+ *   <li>stores the shared {@link LetterService} and the PDF storage directory
+ *       as ServletContext attributes.</li>
  * </ol>
+ *
+ * <p>Any failure is logged and swallowed so a problem in this module can NEVER
+ * prevent the rest of the Sandesh application from starting.
  *
  * <p>Requires Servlet 3.0+ annotation scanning (the default for a normal
  * Eclipse Dynamic Web Project / Tomcat). If the Sandesh web.xml sets
@@ -30,9 +34,6 @@ public class AppContextListener implements ServletContextListener {
 
     /** ServletContext attribute keys shared with the servlets. */
     public static final String KEY_LETTER_SERVICE = "chss.letterService";
-    public static final String KEY_EMPLOYEE_DAO = "chss.employeeDao";
-    public static final String KEY_REASON_DAO = "chss.reasonDao";
-    public static final String KEY_LETTER_DAO = "chss.letterDao";
     public static final String KEY_STORAGE_DIR = "chss.storageDir";
 
     @Override
@@ -43,7 +44,7 @@ public class AppContextListener implements ServletContextListener {
             RejectionReasonDAO rejectionReasonDAO = new RejectionReasonDAO();
             GeneratedLetterDAO generatedLetterDAO = new GeneratedLetterDAO();
 
-            // Bootstrap the static rejection reasons on first startup.
+            // Bootstrap the rejection reasons on first startup (never fails the app).
             AppDataInitializer.seedRejectionReasons(rejectionReasonDAO);
 
             String storageDir = resolveStorageDir(ctx);
@@ -51,15 +52,11 @@ public class AppContextListener implements ServletContextListener {
                     new LetterService(employeeDAO, rejectionReasonDAO, generatedLetterDAO);
 
             ctx.setAttribute(KEY_LETTER_SERVICE, letterService);
-            ctx.setAttribute(KEY_EMPLOYEE_DAO, employeeDAO);
-            ctx.setAttribute(KEY_REASON_DAO, rejectionReasonDAO);
-            ctx.setAttribute(KEY_LETTER_DAO, generatedLetterDAO);
             ctx.setAttribute(KEY_STORAGE_DIR, storageDir);
 
             ctx.log("[CHSS] Module initialised. PDF storage: " + storageDir);
         } catch (Exception e) {
-            ctx.log("[CHSS] Failed to initialise module", e);
-            throw new IllegalStateException("CHSS module initialisation failed", e);
+            ctx.log("[CHSS] Module initialisation problem (Sandesh continues): " + e.getMessage(), e);
         }
     }
 
@@ -80,7 +77,7 @@ public class AppContextListener implements ServletContextListener {
                     ? realPath + "generated_letters"
                     : realPath + java.io.File.separator + "generated_letters";
         }
-        // Last-resort fallback (e.g. WAR not exploded).
+        // Last-resort fallback (e.g. webapp not exploded).
         return System.getProperty("java.io.tmpdir") + java.io.File.separator + "chss_generated_letters";
     }
 }

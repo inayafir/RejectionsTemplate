@@ -20,11 +20,17 @@ import java.util.List;
  * <p>=========================================================================
  * EMPLOYEE SQL PLACEHOLDER - EDIT HERE IN THE OFFICE
  * --------------------------------------------------------------------------
- * Change the five constants below to match the actual employee table name and
- * column names. This is the only file that needs changing for employee lookup.
+ * The table name and column names below are placeholders. After speaking with
+ * the IT team, change the constants to the real employee table name and column
+ * names. Both the SQL strings and the ResultSet mapping use these constants,
+ * so editing them here is the ONLY change needed for employee lookup.
  * =========================================================================
  */
 public class EmployeeDAO {
+
+    // ----------------------------------------------------------------------
+    // PLACEHOLDER table and column names - replace after talking to IT.
+    // ----------------------------------------------------------------------
 
     /** Name of the existing employee table. */
     private static final String EMPLOYEE_TABLE = "EMPLOYEE_TABLE";
@@ -45,10 +51,20 @@ public class EmployeeDAO {
     private static final String COL_CITY = "CITY";
     private static final String COL_PINCODE = "PINCODE";
 
-    private static final String SELECT_COLUMNS =
-            COL_STAFF_NUMBER + ", " + COL_EMPLOYEE_NAME + ", " + COL_DEPARTMENT + ", " + COL_DESIGNATION +
-            ", " + COL_PHONE + ", " + COL_EMAIL + ", " + COL_ADDRESS_LINE_1 + ", " + COL_ADDRESS_LINE_2 +
-            ", " + COL_LOCALITY + ", " + COL_CITY + ", " + COL_PINCODE;
+    // ----------------------------------------------------------------------
+    // Plain SQL - same shape as the existing Sandesh employee lookup module.
+    // ----------------------------------------------------------------------
+
+    /** SELECT * FROM EMPLOYEE_TABLE WHERE STAFF_NUMBER = ? */
+    private static final String SQL_FIND_BY_STAFF_ID =
+            "SELECT * FROM " + EMPLOYEE_TABLE +
+            " WHERE " + COL_STAFF_NUMBER + " = ?";
+
+    /** SELECT * FROM EMPLOYEE_TABLE WHERE STAFF_NUMBER LIKE ? OR EMPLOYEE_NAME LIKE ? ORDER BY EMPLOYEE_NAME */
+    private static final String SQL_SEARCH =
+            "SELECT * FROM " + EMPLOYEE_TABLE +
+            " WHERE " + COL_STAFF_NUMBER + " LIKE ? OR " + COL_EMPLOYEE_NAME + " LIKE ?" +
+            " ORDER BY " + COL_EMPLOYEE_NAME;
 
     /**
      * Finds a single employee by Staff Number (exact match).
@@ -57,11 +73,8 @@ public class EmployeeDAO {
      * @return the employee, or {@code null} if not found
      */
     public Employee findById(String staffId) {
-        String sql = "SELECT " + SELECT_COLUMNS +
-                     " FROM " + EMPLOYEE_TABLE +
-                     " WHERE " + COL_STAFF_NUMBER + " = ?";
         try (Connection conn = DatabaseAdapter.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_STAFF_ID)) {
             ps.setString(1, staffId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -86,12 +99,8 @@ public class EmployeeDAO {
         if (query == null || query.trim().isEmpty()) {
             return employees;
         }
-        String sql = "SELECT " + SELECT_COLUMNS +
-                     " FROM " + EMPLOYEE_TABLE +
-                     " WHERE " + COL_STAFF_NUMBER + " LIKE ? OR " + COL_EMPLOYEE_NAME + " LIKE ?" +
-                     " ORDER BY " + COL_EMPLOYEE_NAME;
         try (Connection conn = DatabaseAdapter.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(SQL_SEARCH)) {
             String pattern = "%" + query.trim() + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
@@ -108,17 +117,17 @@ public class EmployeeDAO {
 
     private Employee mapEmployee(ResultSet rs) throws SQLException {
         Employee emp = new Employee();
-        emp.setStaffId(rs.getString(1));
-        emp.setEmployeeName(rs.getString(2));
-        emp.setDepartment(rs.getString(3));
-        emp.setDesignation(rs.getString(4));
-        emp.setPhone(rs.getString(5));
-        emp.setEmail(rs.getString(6));
-        emp.setAddressLine1(rs.getString(7));
-        emp.setAddressLine2(rs.getString(8));
-        emp.setLocality(rs.getString(9));
-        emp.setCity(rs.getString(10));
-        emp.setPincode(rs.getString(11));
+        emp.setStaffId(rs.getString(COL_STAFF_NUMBER));
+        emp.setEmployeeName(rs.getString(COL_EMPLOYEE_NAME));
+        emp.setDepartment(rs.getString(COL_DEPARTMENT));
+        emp.setDesignation(rs.getString(COL_DESIGNATION));
+        emp.setPhone(rs.getString(COL_PHONE));
+        emp.setEmail(rs.getString(COL_EMAIL));
+        emp.setAddressLine1(rs.getString(COL_ADDRESS_LINE_1));
+        emp.setAddressLine2(rs.getString(COL_ADDRESS_LINE_2));
+        emp.setLocality(rs.getString(COL_LOCALITY));
+        emp.setCity(rs.getString(COL_CITY));
+        emp.setPincode(rs.getString(COL_PINCODE));
         return emp;
     }
 }

@@ -32,8 +32,8 @@ src/
 │   │   ├── GeneratedLetter.java
 │   │   └── RejectionReason.java
 │   ├── servlet/
-│   │   ├── EmployeeApiServlet.java         (autocomplete + lookup JSON)
-│   │   └── LetterServlet.java              (generate/view/edit/download/print/regenerate)
+│   │   ├── EmployeeSearchServlet.java       (autocomplete JSON — /chss/employee-search)
+│   │   └── LetterServlet.java               (/chss/generate + view/edit/download/print/regenerate)
 │   └── service/
 │       ├── AppDataInitializer.java         (seeds rejection_reasons)
 │       ├── LetterService.java
@@ -69,13 +69,16 @@ The JARs are **not** shipped in this repository. Copy the ones listed in
 `lib/README.txt` into the project's `lib/` folder (or `web/WEB-INF/lib/`,
 whichever the existing Sandesh project uses):
 
-* `mysql-connector-j-8.1.0.jar` (MySQL JDBC driver)
 * iText 7: `html2pdf-5.0.2.jar` + `kernel`, `io`, `layout`, `forms`, `pdfa`,
-  `commons`, `styled-xml-parser`, `svg`, `font-asian` (all 8.0.2)
-* `slf4j-api-2.0.x.jar`
-* JSTL (javax variant for Tomcat 8/9; jakarta variant for Tomcat 10+)
+  `commons`, `styled-xml-parser`, `svg` (all 8.0.2) — required by
+  `PdfGenerator.java`. `font-asian` is NOT needed (the letter is English-only).
+* `slf4j-api-2.0.x.jar` — iText logs through SLF4J (reuse Sandesh's if present).
+* `mysql-connector-j-8.1.0.jar` — only if the connection mechanism copied into
+  `DatabaseAdapter.java` uses `DriverManager`. Sandesh already talks to MySQL,
+  so this is usually already present.
 
-The Servlet API is provided by the container — do not bundle it.
+The Servlet/JSP/EL APIs are provided by the container — do not bundle them.
+No JSTL is needed; the JSPs use JSP scriptlets and EL.
 
 ## 4. How to update the employee SQL query
 
@@ -89,31 +92,27 @@ private static final String COL_EMPLOYEE_NAME = "EMPLOYEE_NAME";
 // ... address/contact columns
 ```
 
-Change these to the real employee table name and column names. The generated
-query looks exactly like the existing Sandesh employee lookup:
+Change these to the real employee table name and column names. The SQL is plain
+and has the same shape as the existing Sandesh employee lookup:
 
 ```sql
-SELECT STAFF_NUMBER, EMPLOYEE_NAME, DEPARTMENT, DESIGNATION,
-       PHONE, EMAIL, ADDRESS_LINE_1, ADDRESS_LINE_2,
-       LOCALITY, CITY, PINCODE
-FROM EMPLOYEE_TABLE
-WHERE STAFF_NUMBER = ?            -- findById (exact)
+SELECT * FROM EMPLOYEE_TABLE WHERE STAFF_NUMBER = ?   -- findById (exact)
 
-... WHERE STAFF_NUMBER LIKE ? OR EMPLOYEE_NAME LIKE ?   -- autocomplete
+... WHERE STAFF_NUMBER LIKE ? OR EMPLOYEE_NAME LIKE ? -- autocomplete
 ```
 
-The JSON keys returned by `EmployeeApiServlet` stay `staffId`, `employeeName`,
-`addressLine1`, ... regardless of the SQL column names, so the JavaScript needs
-no changes when you remap columns.
+The JSON keys returned by `EmployeeSearchServlet` stay `staffId`,
+`employeeName`, `addressLine1`, ... regardless of the SQL column names, so the
+JavaScript needs no changes when you remap columns.
 
 ## 5. How to replace `DatabaseAdapter`
 
 `src/com/ursc/chss/db/DatabaseAdapter.java` is the only file involved in
-database connectivity. Either:
-
-* edit the `DB_URL` / `DB_USER` / `DB_PASSWORD` / `DB_DRIVER` constants, or
-* replace the body of `getConnection()` with the Sandesh mechanism, e.g. a JNDI
-  DataSource:
+database connectivity. It currently throws
+`UnsupportedOperationException` from a clearly-marked placeholder: copy the
+database connection mechanism from an existing Sandesh module into
+`getConnection()` (JNDI DataSource, DriverManager, or a shared JDBC helper —
+whatever Sandesh uses), for example:
 
 ```java
 Context ctx = new InitialContext();
@@ -129,7 +128,7 @@ No other file reads connection settings.
   project uses: `javax.servlet.*` (Tomcat 8/9) or `jakarta.servlet.*`
   (Tomcat 10+). This module is written for `javax.servlet`; if the project uses
   `jakarta`, replace `javax.servlet` → `jakarta.servlet` in the imports of the
-  servlet/listener classes and use the jakarta JSTL jars.
+  servlet/listener classes.
 * Check whether the project registers servlets in `web.xml`. If yes, use the
   mappings in `web/WEB-INF/CHSS_SERVLET_MAPPINGS.txt` instead of (or in
   addition to) the `@WebServlet` annotations — never double-register the same
@@ -143,27 +142,26 @@ No other file reads connection settings.
 ## 7. How to verify the employee lookup
 
 1. Start the webapp. The console should show
-   `[CHSS] Module initialised. PDF storage: ...` and
-   `[CHSS] Seeded 18 rejection reasons.` (first run).
-2. Open `GET <context>/generate`.
+   `[CHSS] Module initialised. PDF storage: ...` (and, once the connection
+   mechanism is in place, `[CHSS] Seeded 18 rejection reasons.` on first run).
+2. Open `GET <context>/chss/generate`.
 3. Type a known Staff Number (or partial name) in **Search Staff**. The
    autocomplete list should appear from the organisation's employee table.
 4. Select an employee. Name and address must auto-fill, and the live preview
    must update.
-5. Confirm the JSON endpoints directly:
-   * `GET <context>/api/employees/search?q=ISO` → JSON array
-   * `GET <context>/api/employees/ISO0012` → JSON object or `null`
+5. Confirm the autocomplete endpoint directly:
+   * `GET <context>/chss/employee-search?q=ISO` → JSON array
 
 If nothing appears, the usual cause is a wrong table/column name in
-`EmployeeDAO` (section 4) or a DB connection problem in `DatabaseAdapter`
-(section 5).
+`EmployeeDAO` (section 4) or the connection mechanism still missing from
+`DatabaseAdapter` (section 5).
 
 ## 8. How to verify PDF generation
 
 1. On the generate page, select an employee, set dates and amount, choose at
    least one reason (or a custom reason), and click **Generate PDF**.
-2. You are taken to `/view/<id>`, which streams the PDF inline (printed via
-   `/print/<id>`).
+2. You are taken to `/chss/view/<id>`, which streams the PDF inline (printed
+   via `/chss/print/<id>`).
 3. Check the PDF layout and wording — it is produced from
    `src/templates/Template.html` and must look exactly like the original
    application's output.
@@ -182,9 +180,11 @@ If nothing appears, the usual cause is a wrong table/column name in
 * **Not creating the MySQL tables** — run `web/WEB-INF/sql/chss_schema.sql`
   once. Without `rejection_reasons`, the dropdown is empty; without
   `generated_letters`, generation fails.
-* **Not adding the JARs** — the MySQL driver, iText 7, and JSTL must be in the
-  project's `lib/`. Missing iText causes `NoClassDefFoundError` at PDF time;
-  missing JSTL causes a JSP translation error.
+* **Not adding the JARs** — iText 7 (+ svg) and slf4j must be in the project's
+  `lib/`. Missing iText causes `NoClassDefFoundError` at PDF time.
+* **DatabaseAdapter still a placeholder** — `getConnection()` throws
+  `UnsupportedOperationException` until the Sandesh connection mechanism is
+  copied in; all module pages that touch the database will fail until then.
 * **Double-registering servlets** — same URL pattern in both `@WebServlet` and
   `web.xml` fails at startup. Use one mechanism.
 * **Hardcoded context path in JavaScript** — keep `window.CONTEXT_PATH`

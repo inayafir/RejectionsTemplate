@@ -22,31 +22,30 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Main workflow servlet of the CHSS Rejection Letter module. Replaces the
- * former Spring MVC controller; every mapping below existed in the original
- * application.
+ * Main workflow servlet of the CHSS Rejection Letter module.
  *
  * <ul>
- *   <li>{@code GET  /generate}            - show the generate form</li>
- *   <li>{@code POST /generate}            - create a letter, redirect to /view/{id}</li>
- *   <li>{@code GET  /view/{id}}           - view a letter (PDF viewer)</li>
- *   <li>{@code GET  /edit/{id}}           - edit a letter (generate form, prefilled)</li>
- *   <li>{@code GET  /download/{id}}       - download the PDF</li>
- *   <li>{@code GET  /print/{id}}          - stream the PDF inline for printing</li>
- *   <li>{@code POST /regenerate/{id}}     - regenerate from the stored data</li>
+ *   <li>{@code GET  /chss/generate}          - show the generate form</li>
+ *   <li>{@code POST /chss/generate}          - create a letter, redirect to /chss/view/{id}</li>
+ *   <li>{@code GET  /chss/view/{id}}         - view a letter (PDF viewer)</li>
+ *   <li>{@code GET  /chss/edit/{id}}         - edit a letter (generate form, prefilled)</li>
+ *   <li>{@code GET  /chss/download/{id}}     - download the PDF</li>
+ *   <li>{@code GET  /chss/print/{id}}        - stream the PDF inline for printing</li>
+ *   <li>{@code POST /chss/regenerate/{id}}   - regenerate from the stored data</li>
  * </ul>
  *
- * <p>URL patterns are declared relative to the context root and the JSPs use
+ * <p>All URLs are scoped under {@code /chss/...} so they do not collide with
+ * existing Sandesh servlets, and the JSPs use
  * {@code ${pageContext.request.contextPath}} for every link/action, so the
  * module works under any Sandesh context path without hardcoding.
  */
 @WebServlet(urlPatterns = {
-        "/generate",
-        "/view/*",
-        "/edit/*",
-        "/download/*",
-        "/print/*",
-        "/regenerate/*"
+        "/chss/generate",
+        "/chss/view/*",
+        "/chss/edit/*",
+        "/chss/download/*",
+        "/chss/print/*",
+        "/chss/regenerate/*"
 })
 public class LetterServlet extends HttpServlet {
 
@@ -56,7 +55,7 @@ public class LetterServlet extends HttpServlet {
 
         String path = request.getServletPath();
 
-        if ("/generate".equals(path)) {
+        if ("/chss/generate".equals(path)) {
             showForm(request, response);
             return;
         }
@@ -65,16 +64,16 @@ public class LetterServlet extends HttpServlet {
         if (id == null) return;
 
         switch (path) {
-            case "/view":
+            case "/chss/view":
                 viewLetter(request, response, id);
                 break;
-            case "/edit":
+            case "/chss/edit":
                 editLetter(request, response, id);
                 break;
-            case "/download":
+            case "/chss/download":
                 streamPdf(request, response, id, "attachment");
                 break;
-            case "/print":
+            case "/chss/print":
                 streamPdf(request, response, id, "inline");
                 break;
             default:
@@ -88,12 +87,12 @@ public class LetterServlet extends HttpServlet {
 
         String path = request.getServletPath();
 
-        if ("/generate".equals(path)) {
+        if ("/chss/generate".equals(path)) {
             generateLetter(request, response);
             return;
         }
 
-        if ("/regenerate".equals(path)) {
+        if ("/chss/regenerate".equals(path)) {
             Long id = parseId(request, response);
             if (id == null) return;
             regenerateLetter(request, response, id);
@@ -110,8 +109,10 @@ public class LetterServlet extends HttpServlet {
     private void showForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         LetterService service = letterService(request);
-        request.setAttribute("letterForm", new LetterFormDto());
+        LetterFormDto dto = new LetterFormDto();
+        request.setAttribute("letterForm", dto);
         request.setAttribute("rejectionReasons", service.getAllRejectionReasons());
+        request.setAttribute("addressPreview", "");
         request.getRequestDispatcher("/generate.jsp").forward(request, response);
     }
 
@@ -125,7 +126,6 @@ public class LetterServlet extends HttpServlet {
         }
 
         LetterFormDto dto = new LetterFormDto();
-        dto.setLetterId(letter.getLetterId());
         dto.setStaffId(letter.getEmployee().getStaffId());
         dto.setEmployeeName(letter.getEmployee().getEmployeeName());
         dto.setAddressLine1(letter.getEmployee().getAddressLine1());
@@ -154,6 +154,7 @@ public class LetterServlet extends HttpServlet {
         request.setAttribute("editMode", true);
         request.setAttribute("selectedReasonIdsCsv",
                 dto.getSelectedReasonIds() != null ? String.join(",", dto.getSelectedReasonIds()) : "");
+        request.setAttribute("addressPreview", joinAddress(dto));
         request.getRequestDispatcher("/generate.jsp").forward(request, response);
     }
 
@@ -306,14 +307,6 @@ public class LetterServlet extends HttpServlet {
     private LetterFormDto bindForm(HttpServletRequest request) {
         LetterFormDto dto = new LetterFormDto();
 
-        String letterId = request.getParameter("letterId");
-        if (letterId != null && !letterId.trim().isEmpty()) {
-            try {
-                dto.setLetterId(Long.parseLong(letterId.trim()));
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
         dto.setStaffId(trimToNull(request.getParameter("staffId")));
         dto.setEmployeeName(trimToNull(request.getParameter("employeeName")));
         dto.setAddressLine1(trimToNull(request.getParameter("addressLine1")));
@@ -334,7 +327,6 @@ public class LetterServlet extends HttpServlet {
         dto.setMedicalExpenseDates(listParam(request, "medicalExpenseDates"));
         dto.setSelectedReasonIds(listParam(request, "selectedReasonIds"));
         dto.setCustomReasons(listParam(request, "customReasons"));
-        dto.setAction(trimToNull(request.getParameter("action")));
         return dto;
     }
 
@@ -370,18 +362,37 @@ public class LetterServlet extends HttpServlet {
         request.setAttribute("error", message);
         request.setAttribute("letterForm", dto);
         request.setAttribute("rejectionReasons", service.getAllRejectionReasons());
+        request.setAttribute("addressPreview", joinAddress(dto));
         request.getRequestDispatcher("/generate.jsp").forward(request, response);
     }
 
     private void redirectError(HttpServletRequest request, HttpServletResponse response, String message)
             throws IOException {
         String enc = URLEncoder.encode(message, StandardCharsets.UTF_8.name());
-        response.sendRedirect(request.getContextPath() + "/generate?error=" + enc);
+        response.sendRedirect(request.getContextPath() + "/chss/generate?error=" + enc);
     }
 
     private static String trimToNull(String value) {
         if (value == null) return null;
         String t = value.trim();
         return t.isEmpty() ? null : t;
+    }
+
+    /** Renders the employee address (from the form snapshot) for the preview card. */
+    private static String joinAddress(LetterFormDto dto) {
+        StringBuilder sb = new StringBuilder();
+        if (dto.getAddressLine1() != null && !dto.getAddressLine1().isEmpty())
+            sb.append(dto.getAddressLine1()).append(", ");
+        if (dto.getAddressLine2() != null && !dto.getAddressLine2().isEmpty())
+            sb.append(dto.getAddressLine2()).append(", ");
+        if (dto.getLocality() != null && !dto.getLocality().isEmpty())
+            sb.append(dto.getLocality()).append(", ");
+        if (dto.getCity() != null && !dto.getCity().isEmpty())
+            sb.append(dto.getCity()).append(" - ");
+        if (dto.getPincode() != null && !dto.getPincode().isEmpty())
+            sb.append(dto.getPincode());
+
+        String result = sb.toString();
+        return result.endsWith(", ") ? result.substring(0, result.length() - 2) : result;
     }
 }

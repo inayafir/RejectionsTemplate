@@ -8,7 +8,6 @@ import java.util.List;
  */
 public class LetterFormDto {
 
-    private Long letterId;
     private String staffId;
     private String employeeName;
     private String addressLine1;
@@ -21,12 +20,8 @@ public class LetterFormDto {
     private Double amount;
     private List<String> selectedReasonIds;
     private List<String> customReasons;
-    private String action;
 
     public LetterFormDto() {}
-
-    public Long getLetterId() { return letterId; }
-    public void setLetterId(Long letterId) { this.letterId = letterId; }
 
     public String getStaffId() { return staffId; }
     public void setStaffId(String staffId) { this.staffId = staffId; }
@@ -63,7 +58,4 @@ public class LetterFormDto {
 
     public List<String> getCustomReasons() { return customReasons; }
     public void setCustomReasons(List<String> customReasons) { this.customReasons = customReasons; }
-
-    public String getAction() { return action; }
-    public void setAction(String action) { this.action = action; }
 }

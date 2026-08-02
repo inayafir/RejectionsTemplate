@@ -1,5 +1,3 @@
-var CONTEXT_PATH = (typeof window.CONTEXT_PATH !== 'undefined') ? window.CONTEXT_PATH : '';
-
 document.addEventListener('DOMContentLoaded', function () {
     var toast = document.getElementById('toast');
     if (toast) {
@@ -13,25 +11,11 @@ document.addEventListener('DOMContentLoaded', function () {
     initLivePreview();
     initFormValidation();
     initEditMode();
-
-    var staffId = document.getElementById('staffId');
-    if (staffId && staffId.value) {
-        fetchEmployee(staffId.value);
-    }
 });
 
 function dismissToast() {
     var toast = document.getElementById('toast');
     if (toast) toast.remove();
-}
-
-function fetchEmployee(staffId) {
-    fetch(CONTEXT_PATH + '/api/employees/' + encodeURIComponent(staffId))
-        .then(function (r) { return r.json(); })
-        .then(function (emp) {
-            if (emp && typeof selectEmployee === 'function') selectEmployee(emp);
-        })
-        .catch(function () {});
 }
 
 function initLivePreview() {

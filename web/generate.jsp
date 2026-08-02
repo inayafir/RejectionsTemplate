@@ -1,5 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,26 +12,25 @@
 </head>
 <body>
     <div class="app-container">
-        <c:if test="${not empty success}">
+        <% if (request.getAttribute("success") != null) { %>
             <div class="toast toast-success" id="toast">
                 <span>${success}</span>
                 <button onclick="dismissToast()" class="toast-close">&times;</button>
             </div>
-        </c:if>
-        <c:if test="${not empty error}">
+        <% } %>
+        <% if (request.getAttribute("error") != null) { %>
             <div class="toast toast-error" id="toast">
                 <span>${error}</span>
                 <button onclick="dismissToast()" class="toast-close">&times;</button>
             </div>
-        </c:if>
+        <% } %>
 
         <main class="main-content">
             <div class="page-header">
                 <h1>Create Rejection Letter</h1>
             </div>
 
-            <form action="${pageContext.request.contextPath}/generate" method="post" id="letterForm" class="form-preview-grid">
-                <input type="hidden" name="letterId" id="letterId" value="${letterForm.letterId}" />
+            <form action="${pageContext.request.contextPath}/chss/generate" method="post" id="letterForm" class="form-preview-grid">
                 <input type="hidden" name="employeeName" id="employeeName" value="${letterForm.employeeName}" />
                 <input type="hidden" name="addressLine1" id="addressLine1" value="${letterForm.addressLine1}" />
                 <input type="hidden" name="addressLine2" id="addressLine2" value="${letterForm.addressLine2}" />
@@ -54,14 +52,14 @@
                                     <div id="autocompleteResults" class="autocomplete-results"></div>
                                 </div>
                             </div>
-                            <div class="employee-card" id="employeeDetails">
+                            <div class="employee-card${(not empty letterForm.staffId || editMode) ? ' show' : ''}" id="employeeDetails">
                                 <div class="emp-row">
                                     <span class="emp-label">Name:</span>
-                                    <span class="emp-value" id="displayName"></span>
+                                    <span class="emp-value" id="displayName">${letterForm.employeeName}</span>
                                 </div>
                                 <div class="emp-row">
                                     <span class="emp-label">Address:</span>
-                                    <span class="emp-value" id="displayAddress"></span>
+                                    <span class="emp-value" id="displayAddress">${addressPreview}</span>
                                 </div>
                             </div>
                         </div>
@@ -99,15 +97,23 @@
                         <div class="card-body">
                             <div class="section-title">Rejection Reasons</div>
                             <input type="hidden" id="editMode" value="${editMode ? 'true' : 'false'}" />
-                            <textarea id="selectedReasonIdsData" style="display:none;"><c:out value="${selectedReasonIdsCsv}" /></textarea>
+                            <textarea id="selectedReasonIdsData" style="display:none;"><%= request.getAttribute("selectedReasonIdsCsv") == null ? "" : String.valueOf(request.getAttribute("selectedReasonIdsCsv")) %></textarea>
                             <div class="reasons-section" id="reasonsContainer">
                                 <div class="reason-row" data-index="0">
                                     <div class="reason-select-wrapper">
                                         <select name="selectedReasonIds" class="form-control reason-select" onchange="handleReasonChange(this)">
                                             <option value="">-- Select Reason --</option>
-                                            <c:forEach items="${rejectionReasons}" var="reason">
-                                                <option value="${reason.id}">${reason.reasonNumber}. ${reason.description}</option>
-                                            </c:forEach>
+                                            <%
+                                                java.util.List<com.ursc.chss.model.RejectionReason> reasons =
+                                                        (java.util.List<com.ursc.chss.model.RejectionReason>) request.getAttribute("rejectionReasons");
+                                                if (reasons != null) {
+                                                    for (com.ursc.chss.model.RejectionReason reason : reasons) {
+                                            %>
+                                            <option value="<%= reason.getId() %>"><%= reason.getReasonNumber() %>. <%= reason.getDescription() %></option>
+                                            <%
+                                                    }
+                                                }
+                                            %>
                                             <option value="custom">-- Custom Reason --</option>
                                         </select>
                                         <button type="button" class="btn-icon add-btn" onclick="addReason()" title="Add another reason">+</button>
@@ -163,7 +169,7 @@
                 return;
             }
             debounceTimer = setTimeout(function () {
-                fetch(CONTEXT_PATH + '/api/employees/search?q=' + encodeURIComponent(query))
+                fetch(CONTEXT_PATH + '/chss/employee-search?q=' + encodeURIComponent(query))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         resultsContainer.innerHTML = '';

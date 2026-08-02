@@ -1,8 +1,8 @@
 package com.ursc.chss.servlet;
 
-import com.ursc.chss.dao.EmployeeDAO;
 import com.ursc.chss.listener.AppContextListener;
 import com.ursc.chss.model.Employee;
+import com.ursc.chss.service.LetterService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -14,55 +14,39 @@ import java.io.PrintWriter;
 import java.util.List;
 
 /**
- * JSON endpoint backing the employee autocomplete on the generate page and the
- * edit-page employee repopulation.
+ * Backs the "Search Staff" autocomplete on the generate page.
  *
- * <ul>
- *   <li>{@code GET /api/employees/search?q=...} returns a JSON array of matching employees</li>
- *   <li>{@code GET /api/employees/{staffId}} returns a single employee JSON object (or {@code null})</li>
- * </ul>
+ * <p>{@code GET /chss/employee-search?q=...} returns a JSON array of matching
+ * employees, read directly from the organisation's existing employee table via
+ * {@link LetterService#getEmployeeDAO()}.
  *
- * <p>Output is hand-built JSON (no external JSON library) with the exact same
- * camelCase keys the JavaScript uses. If the Sandesh project already serves
- * JSON for employee lookup, these two endpoints can be pointed at that service
- * instead.
+ * <p>Output is hand-built JSON (no external JSON library) with the exact
+ * camelCase keys the JavaScript uses. If the existing Sandesh employee module
+ * already exposes a matching lookup, the JavaScript in generate.jsp can be
+ * pointed at that instead.
  */
-@WebServlet(urlPatterns = "/api/employees/*")
-public class EmployeeApiServlet extends HttpServlet {
+@WebServlet(urlPatterns = "/chss/employee-search")
+public class EmployeeSearchServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EmployeeDAO dao = (EmployeeDAO) request.getServletContext()
-                .getAttribute(AppContextListener.KEY_EMPLOYEE_DAO);
-        if (dao == null) {
+        LetterService service = (LetterService) request.getServletContext()
+                .getAttribute(AppContextListener.KEY_LETTER_SERVICE);
+        if (service == null) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "CHSS module not initialised");
             return;
         }
 
-        String pathInfo = request.getPathInfo(); // "/search", "/ISO0012" or null
+        String query = request.getParameter("q");
+        List<Employee> employees = service.getEmployeeDAO().searchEmployees(query);
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
-
-        if (pathInfo == null || pathInfo.equals("/") || pathInfo.equals("/search")) {
-            // /api/employees/search?q=...  (also tolerate a bare /api/employees)
-            String query = request.getParameter("q");
-            List<Employee> employees = dao.searchEmployees(query);
-            out.print(toJsonArray(employees));
-            return;
-        }
-
-        String staffId = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
-        if (staffId.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing staff id");
-            return;
-        }
-
-        Employee employee = dao.findById(staffId);
-        out.print(employee == null ? "null" : toJson(employee));
+        out.print(toJsonArray(employees));
     }
 
     private String toJsonArray(List<Employee> employees) {
